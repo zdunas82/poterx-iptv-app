@@ -1,5 +1,11 @@
 import java.io.ByteArrayOutputStream
+import java.net.URLDecoder
+import java.security.SecureRandom
+import java.util.Base64
 import java.util.Properties
+import javax.crypto.Cipher
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import org.gradle.process.ExecOperations
 
@@ -498,7 +504,7 @@ object PoterxLink {
         val path = m.groupValues[2]
         val query = m.groupValues[3].removePrefix("?").replace("&amp;", "&")
         val params = query.split('&').filter { it.contains('=') }
-            .associate { it.substringBefore('=') to java.net.URLDecoder.decode(it.substringAfter('='), "UTF-8") }
+            .associate { it.substringBefore('=') to URLDecoder.decode(it.substringAfter('='), "UTF-8") }
         params["username"]?.let { u ->
             val p = params["password"] ?: return null
             val out = params["output"]?.lowercase()
@@ -519,17 +525,17 @@ object PoterxLink {
 
     /** Base64 key to Base64 (iv + ciphertext), AES-256-GCM with a random key and nonce. */
     fun seal(plain: String): Pair<String, String> {
-        val rnd = java.security.SecureRandom()
+        val rnd = SecureRandom()
         val key = ByteArray(32).also { rnd.nextBytes(it) }
         val iv = ByteArray(12).also { rnd.nextBytes(it) }
-        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(
-            javax.crypto.Cipher.ENCRYPT_MODE,
-            javax.crypto.spec.SecretKeySpec(key, "AES"),
-            javax.crypto.spec.GCMParameterSpec(128, iv),
+            Cipher.ENCRYPT_MODE,
+            SecretKeySpec(key, "AES"),
+            GCMParameterSpec(128, iv),
         )
         val body = cipher.doFinal(plain.toByteArray(Charsets.UTF_8))
-        val enc = java.util.Base64.getEncoder()
+        val enc = Base64.getEncoder()
         return enc.encodeToString(key) to enc.encodeToString(iv + body)
     }
 }
