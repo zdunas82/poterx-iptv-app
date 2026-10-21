@@ -201,6 +201,16 @@ internal fun ChannelOsdCard(
     }
 }
 
+/** Poterx: the playing channel's identity, handed to the bottom banner slot (see PlayerHud.zapBanner). */
+@Composable
+internal fun ZapBannerHost(player: PlaybackEngine, banner: @Composable (title: String?, subtitle: String?, logoUrl: String?) -> Unit) {
+    val meta by player.currentMeta.collectAsStateWithLifecycle()
+    val displayTitle = meta.title?.takeIf { it.isNotBlank() }
+        ?: meta.episodeNumber?.let { stringResource(R.string.player_episode_number, it) }
+        ?: ""
+    banner(displayTitle, meta.localizedSubtitle(), meta.logoUrl)
+}
+
 @Composable
 internal fun ChannelCard(player: PlaybackEngine, modifier: Modifier = Modifier, guide: (@Composable () -> Unit)? = null) {
     // Collect the reactive meta so the card refreshes the instant a zap changes the channel.

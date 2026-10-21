@@ -210,6 +210,9 @@ fun PlayerHud(
     liveEpgCard: (@Composable () -> Unit)? = null,
     // Now/next lines for the channel-change banner (the playing channel's guide). Null = name only.
     zapGuide: (@Composable () -> Unit)? = null,
+    // Poterx: a full-width banner along the bottom of the picture that replaces the top-left zap card
+    // while the controls are hidden. Called with the channel's title, number line and logo.
+    zapBanner: (@Composable (title: String?, subtitle: String?, logoUrl: String?) -> Unit)? = null,
     // The archive's own wall-clock instant while catch-up/rewind is playing; null means the picture is
     // the present, and only the real clock shows. Drives the second, framed clock at top centre.
     // Lambda for the same reason as [timeshiftOffsetSec]: this instant advances every second too.
@@ -299,7 +302,7 @@ fun PlayerHud(
     val canZap = onChannelUp != null && onChannelDown != null
     var channelFlash by remember { mutableIntStateOf(0) }
     var showFlash by remember { mutableStateOf(false) }
-    LaunchedEffect(channelFlash) { if (channelFlash > 0) { showFlash = true; delay(3000); showFlash = false } }
+    LaunchedEffect(channelFlash) { if (channelFlash > 0) { showFlash = true; delay(if (zapBanner != null) 5000 else 3000); showFlash = false } }
 
     // Engine-switch confirmation toast: a brief "Switched to MPV/ExoPlayer" at the bottom-center when the
     // user flips the engine via the HUD toggle. Mirrors the channel-flash pattern above.
@@ -631,7 +634,8 @@ fun PlayerHud(
                 .padding(start = 28.dp, top = if (controlsVisible) 92.dp else 28.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (isLive && (tuned != null || (showFlash && !controlsVisible))) {
+            // Poterx: with a bottom banner the card only stands in while the controls cover the bottom.
+            if (isLive && (tuned != null || (showFlash && !controlsVisible)) && (zapBanner == null || controlsVisible)) {
                 // A fresh tune drives the card from the lookup result, not player metadata: the Stalker and
                 // mpv paths publish their metadata after an async resolve, which would show the old channel.
                 if (tuned != null) {
@@ -644,6 +648,17 @@ fun PlayerHud(
                 is TuneOsd.Entry -> ChannelNumberCard(osd.digits)
                 is TuneOsd.Message -> ChannelNumberCard(osd.digits, error = osd.text)
                 is TuneOsd.Tuned, null -> Unit
+            }
+        }
+
+        // Poterx: the bottom banner — same triggers as the card above, drawn along the bottom edge.
+        if (zapBanner != null && isLive && !controlsVisible && (tuned != null || showFlash)) {
+            Box(Modifier.align(Alignment.BottomStart).fillMaxWidth()) {
+                if (tuned != null) {
+                    zapBanner(tuned.name, tuned.number?.let { stringResource(R.string.player_channel_number, it) }, tuned.logoUrl)
+                } else {
+                    ZapBannerHost(player, zapBanner)
+                }
             }
         }
 

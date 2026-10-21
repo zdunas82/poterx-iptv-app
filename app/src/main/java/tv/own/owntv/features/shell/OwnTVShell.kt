@@ -1696,6 +1696,13 @@ fun OwnTVShell(
                             tv.own.owntv.features.shell.components.ZapGuideLines(guide)
                         }
                     } else null,
+                    // Poterx: the set-top-box style banner along the bottom instead of the top-left card.
+                    zapBanner = if (isLiveChannel && tv.own.owntv.poterx.LockedSource.enabled) {
+                        { title, subtitle, logoUrl ->
+                            val guide by liveVm.zapGuide.collectAsStateWithLifecycle()
+                            tv.own.owntv.poterx.PoterxZapBanner(title = title, subtitle = subtitle, logoUrl = logoUrl, epg = guide)
+                        }
+                    } else null,
                     // Guide card for the playing channel (nowNext follows previewChannel = what's playing).
                     liveEpgCard = if (isLiveChannel) {
                         {

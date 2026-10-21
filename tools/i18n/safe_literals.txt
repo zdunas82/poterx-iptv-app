@@ -884,7 +884,7 @@
 1	protocol	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	exoplayer
 1	protocol	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	mpv
 1	technical	app/src/main/java/tv/own/owntv/player/PlayerHud.kt	position: $reportPosition${reportDuration?.let { " / $it" }.orEmpty()}
-3	empty	app/src/main/java/tv/own/owntv/player/PlayerHudChrome.kt	\0
+4	empty	app/src/main/java/tv/own/owntv/player/PlayerHudChrome.kt	\0
 2	technical	app/src/main/java/tv/own/owntv/player/PlayerHudChrome.kt	?
 1	technical	app/src/main/java/tv/own/owntv/player/PlayerHudChrome.kt	tuneCaret
 1	technical	app/src/main/java/tv/own/owntv/player/PlayerHudChrome.kt	tuneCaretAlpha
@@ -902,6 +902,7 @@
 1	locale	app/src/main/java/tv/own/owntv/poterx/PoterxDefaults.kt	pl
 1	preference-key	app/src/main/java/tv/own/owntv/poterx/PoterxDefaults.kt	playback_v1
 1	preference-key	app/src/main/java/tv/own/owntv/poterx/PoterxDefaults.kt	poterx_defaults
+2	empty	app/src/main/java/tv/own/owntv/poterx/PoterxZapBanner.kt	\0
 1	file-path	app/src/main/java/tv/own/owntv/ui/components/BackgroundImageChooserDialog.kt	background_${System.currentTimeMillis()}.$ext
 1	file-path	app/src/main/java/tv/own/owntv/ui/components/BackgroundImageChooserDialog.kt	png
 1	log	app/src/main/java/tv/own/owntv/ui/components/BackgroundPicture.kt	BgImage
