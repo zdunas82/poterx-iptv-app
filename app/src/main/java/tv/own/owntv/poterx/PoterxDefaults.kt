@@ -2,10 +2,18 @@ package tv.own.owntv.poterx
 
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import tv.own.owntv.core.database.dao.SourceDao
+import tv.own.owntv.core.epg.EpgSourceStore
 import tv.own.owntv.core.i18n.LocaleStore
+import tv.own.owntv.core.model.SourceType
+import tv.own.owntv.core.repository.EpgRepository
+import tv.own.owntv.core.settings.EpgAutoRefresh
+import tv.own.owntv.core.settings.EpgRefresh
 import tv.own.owntv.core.settings.SettingsRepository
+import tv.own.owntv.features.settings.runSemiAutoEpgSync
 
 /**
  * Poterx: the defaults a locked build starts with, applied once per install and then left to the
@@ -47,6 +55,36 @@ object PoterxDefaults {
                 settings.setAutoFrameRatePrompted()
             }
             prefs.edit().putBoolean(KEY_PLAYBACK_DONE, true).apply()
+        }
+    }
+
+    /**
+     * The guide is part of the product, not an option: a locked build whose playlist has no EPG
+     * source yet registers the panel's own xmltv.php feed and downloads it, and every guide feed
+     * without a refresh choice gets one (every 12 h). Runs on each start and acts only when needed,
+     * so an install upgraded from a version that never registered the guide heals itself, and a
+     * first start before sign-in (no playlist yet) does nothing.
+     */
+    fun ensureGuide(
+        scope: CoroutineScope,
+        sourceDao: SourceDao,
+        epgRepository: EpgRepository,
+        store: EpgSourceStore,
+        settings: SettingsRepository,
+    ) {
+        if (!LockedSource.enabled) return
+        scope.launch {
+            runCatching {
+                if (store.getAll().isEmpty()) {
+                    val playlists = sourceDao.getAllOnce().filter { it.type == SourceType.XTREAM }
+                    if (playlists.isEmpty()) return@runCatching
+                    playlists.forEach { runSemiAutoEpgSync(it, epgRepository, store) {} }
+                }
+                val chosen = settings.epgAutoRefresh.first()
+                store.getAll().forEach { feed ->
+                    if (chosen[feed.id] == null) settings.setEpgAutoRefresh(feed.id, EpgRefresh(EpgAutoRefresh.HOURS_12))
+                }
+            }
         }
     }
 

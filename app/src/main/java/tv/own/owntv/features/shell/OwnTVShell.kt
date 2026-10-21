@@ -493,7 +493,12 @@ fun OwnTVShell(
                     localSubToast.show(startupChannelUnavailable)
                 }
             }
-            tv.own.owntv.core.settings.StartupMode.HOME -> Unit
+            // Poterx: "Home" on a locked build is Live TV with every channel listed, focus in the list.
+            tv.own.owntv.core.settings.StartupMode.HOME -> if (tv.own.owntv.poterx.LockedSource.enabled) {
+                onSelectSection(MainSection.LIVE_TV)
+                liveVm.select(tv.own.owntv.core.live.LiveKey.All)
+                restoreFocus = true
+            }
         }
     }
 

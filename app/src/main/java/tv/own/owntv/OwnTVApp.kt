@@ -141,6 +141,10 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         }
         // Poterx: set-top-box playback defaults (Auto frame rate off, its prompt dismissed), once per install.
         tv.own.owntv.poterx.PoterxDefaults.applySettings(this, appScope, GlobalContext.get().get())
+        // Poterx: the panel's guide registered and refreshing, whatever version this install started on.
+        GlobalContext.get().let { koin ->
+            tv.own.owntv.poterx.PoterxDefaults.ensureGuide(appScope, koin.get(), koin.get(), koin.get(), koin.get())
+        }
         // Sports: core decides from Auto rebuild whether the stored board is due ("on every app start",
         // or older than the chosen hours). It reads one small file and touches no database.
         appScope.launch {

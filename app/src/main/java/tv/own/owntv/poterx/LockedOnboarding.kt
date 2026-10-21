@@ -25,12 +25,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Text
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.koinInject
 import tv.own.owntv.R
 import tv.own.owntv.core.settings.PlaylistAutoRefresh
 import tv.own.owntv.core.settings.PlaylistRefresh
-import tv.own.owntv.core.settings.SettingsRepository
-import tv.own.owntv.core.settings.StartupMode
 import tv.own.owntv.core.setup.SourceImporter
 import tv.own.owntv.core.sync.importProgressDisplay
 import tv.own.owntv.features.settings.StageFieldRow
@@ -67,7 +64,6 @@ fun LockedOnboarding(
     modifier: Modifier = Modifier,
 ) {
     val vm: SetupViewModel = koinViewModel()
-    val settings: SettingsRepository = koinInject()
     val account = LockedSource.account
     val state by vm.state.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
@@ -85,10 +81,6 @@ fun LockedOnboarding(
     // 1. The profile. -1 = no avatar yet, the same default the wizard's profile step starts on.
     LaunchedEffect(Unit) {
         if (profileId < 0L) vm.createProfile(profileName, -1, isKids = false, pin = null, picture = null) { profileId = it }
-    }
-    // Poterx opens on the channel last watched, like a set-top box; Settings › App startup can change it.
-    LaunchedEffect(profileId) {
-        if (profileId >= 0L) runCatching { settings.setStartupMode(profileId, StartupMode.LAST_CHANNEL) }
     }
     // 2. The playlist: link the copy an earlier profile imported, else import with the built-in
     //    account or the credentials just typed.
