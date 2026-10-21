@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.koinInject
 import tv.own.owntv.R
+import tv.own.owntv.poterx.LockedSource
 import tv.own.owntv.core.brand.AppIcon
 import tv.own.owntv.core.brand.AppIconSwitcher
 import tv.own.owntv.core.brand.PixelMark as CorePixelMark
@@ -107,7 +108,7 @@ private val PixelPower = Color(CorePixelMark.POWER)
 @Composable
 fun Wordmark(width: Dp, modifier: Modifier = Modifier, tv: Color = stageAccent.accent, own: Color = WordmarkCream) {
     // Poterx: the brand is the app name, set in the wordmark's own box so every lockup keeps its layout.
-    if (tv.own.owntv.poterx.LockedSource.enabled) {
+    if (LockedSource.enabled) {
         Box(modifier.width(width).height(width * 182f / 988f), contentAlignment = Alignment.CenterStart) {
             androidx.tv.material3.Text(
                 androidx.compose.ui.res.stringResource(R.string.app_name),
