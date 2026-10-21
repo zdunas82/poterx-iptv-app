@@ -407,7 +407,7 @@ fun SettingsScreen(
     when (tab) {
         SettingsTab.LANGUAGE -> { LanguageSettingsScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
         // Poterx: on a locked build the pages that could show, edit or copy the account are one info page.
-        SettingsTab.SOURCES -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedInfoScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) else ManageSourcesScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
+        SettingsTab.SOURCES -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedSourcesScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) else ManageSourcesScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
         SettingsTab.EPG -> { tv.own.owntv.features.settings.EpgSourcesScreen(onBack = { tab = SettingsTab.ROOT; consumeEpgAdd = false }, modifier = modifier, startOnAdd = consumeEpgAdd) }
         SettingsTab.BACKUP -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedInfoScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) else BackupScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) }
         SettingsTab.LOCAL_SYNC -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedInfoScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) else LocalSyncScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) }

@@ -49,7 +49,8 @@ Wynik: `app/build/outputs/apk/standard/release/*.apk`.
 | Miejsce | Zachowanie |
 |---|---|
 | Pierwsze uruchomienie | Bez kreatora: profil + import wbudowanej listy, potem od razu aplikacja; wariant „serwer wbudowany” pokazuje wcześniej tylko ekran logowania (login, hasło) |
-| Ustawienia › Playlisty | Strona informacyjna zamiast listy źródeł (brak dodawania/edycji/usuwania) |
+| Ustawienia › Playlisty | „Lista kanałów”: tylko **Odśwież teraz** i **Automatyczne odświeżanie** (wył. / przy starcie / 6 h / 12 h / co N dni, domyślnie 12 h); bez dodawania, edycji, usuwania i bez adresu serwera |
+| EPG | Przewodnik z `xmltv.php` Twojego panelu pobiera się sam zaraz po zalogowaniu i odświeża według ustawień Ustawienia › Źródła EPG |
 | Więcej › Kopia zapasowa, Synchronizacja lokalna | Ukryte (plik `.own` / sync przeniósłby konto) |
 | Dodawanie źródła z telefonu (QR) | Niedostępne (część ukrytego ekranu źródeł) |
 | Sprawdzanie aktualizacji | Ukryte; updater wskazuje to repo, nie OwnTV |

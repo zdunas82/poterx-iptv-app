@@ -26,6 +26,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Text
 import org.koin.androidx.compose.koinViewModel
 import tv.own.owntv.R
+import tv.own.owntv.core.settings.PlaylistAutoRefresh
+import tv.own.owntv.core.settings.PlaylistRefresh
 import tv.own.owntv.core.setup.SourceImporter
 import tv.own.owntv.core.sync.importProgressDisplay
 import tv.own.owntv.features.settings.StageFieldRow
@@ -93,13 +95,21 @@ fun LockedOnboarding(
                 server = account.server,
                 username = account.username.ifBlank { username.trim() },
                 password = account.password.ifBlank { password },
+                // The channel list refreshes itself twice a day; Settings › Playlists changes that.
+                autoRefresh = PlaylistRefresh(PlaylistAutoRefresh.HOURS_12),
                 preferHls = account.preferHls,
             )
         }
     }
     // 3. Straight into the app; the wizard's "All set" page has nothing a locked build needs to say.
+    //    The panel's own guide (xmltv.php) is registered by the import; the wizard would ask before
+    //    downloading it, a locked build just does, in the background, while the app opens.
     LaunchedEffect(state) {
-        if (state is SourceImporter.ImportState.Success) vm.finish(onDone)
+        if (state is SourceImporter.ImportState.Success) {
+            kotlinx.coroutines.delay(250) // the view model notes the guide feed right after the import's own coroutine ends
+            vm.syncPendingEpg()
+            vm.syncEpgInBackground(onDone)
+        }
     }
 
     Box(modifier.fillMaxSize().stageBackground(stageAccent.accent), contentAlignment = Alignment.Center) {
