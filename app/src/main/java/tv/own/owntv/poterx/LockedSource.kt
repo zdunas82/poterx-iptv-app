@@ -20,6 +20,7 @@ object LockedSource {
 
     data class Account(
         val server: String,
+        /** Blank on a server-only build; the user's own then come from the sign-in screen. */
         val username: String,
         val password: String,
         val preferHls: Boolean,
@@ -31,6 +32,9 @@ object LockedSource {
     /** The account, decrypted once; null when the build carries none or the blob is damaged. */
     val account: Account? by lazy { if (enabled) decrypt() else null }
 
+    /** True when only the server is built in: the user signs in with a username and password. */
+    val requiresLogin: Boolean get() = enabled && account?.username.isNullOrBlank()
+
     private fun decrypt(): Account? = runCatching {
         val key = Base64.decode(BuildConfig.POTERX_KEY, Base64.NO_WRAP)
         val blob = Base64.decode(BuildConfig.POTERX_BLOB, Base64.NO_WRAP)
@@ -39,7 +43,7 @@ object LockedSource {
         val cipher = Cipher.getInstance(CIPHER)
         cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, ALGORITHM), GCMParameterSpec(TAG_BITS, iv))
         val lines = String(cipher.doFinal(body), Charsets.UTF_8).split('\n')
-        if (lines.size < 3 || lines[0].isBlank() || lines[1].isBlank() || lines[2].isBlank()) return null
+        if (lines.size < 3 || lines[0].isBlank()) return null
         Account(
             server = lines[0].trim(),
             username = lines[1].trim(),

@@ -1,9 +1,15 @@
 # Poterx TV
 
 Zamknięta, przebrandowana wersja [OwnTV](https://github.com/ahXN00/OwnTV) na Android TV / Google TV /
-Fire TV z **wbudowanym kontem** do jednego panelu XUI.one / Xtream Codes. Użytkownik instaluje APK
-i od razu ogląda — nie wpisuje żadnej linijki, nie może jej podejrzeć, zmienić, wyeksportować ani
-zsynchronizować na inne urządzenie.
+Fire TV dla jednego panelu XUI.one / Xtream Codes. Dwa warianty, wybierane przy budowaniu:
+
+| Wariant | Co jest wbudowane | Co robi użytkownik |
+|---|---|---|
+| **Konto wbudowane** | serwer + login + hasło | instaluje i ogląda |
+| **Serwer wbudowany** | tylko serwer (ukryty) | przy pierwszym uruchomieniu wpisuje login i hasło |
+
+W obu adres serwera nigdy nie jest pokazywany; nie da się go podejrzeć, zmienić, wyeksportować
+ani zsynchronizować na inne urządzenie z poziomu aplikacji.
 
 Licencja: **GPL-3.0** (po OwnTV). Kod tego forka jest publiczny; konto **nie jest** w kodzie —
 trafia do APK dopiero przy budowaniu (zaszyfrowane AES‑GCM, R8 w wydaniu release).
@@ -17,11 +23,13 @@ trafia do APK dopiero przy budowaniu (zaszyfrowane AES‑GCM, R8 w wydaniu relea
 ### A. GitHub Actions (zalecane, nie potrzebujesz Android Studio)
 
 1. W repozytorium: **Settings → Secrets and variables → Actions → New repository secret**
-   - `POTERX_PLAYLIST_URL` = linijka z panelu, np. `http://host:80/playlist/UZYTKOWNIK/HASLO/m3u_plus`
-     (albo trzy osobne: `POTERX_SERVER`, `POTERX_USERNAME`, `POTERX_PASSWORD`).
+   - konto wbudowane: `POTERX_PLAYLIST_URL` = linijka z panelu, np.
+     `http://host:80/playlist/UZYTKOWNIK/HASLO/m3u_plus` (albo trzy osobne: `POTERX_SERVER`,
+     `POTERX_USERNAME`, `POTERX_PASSWORD`);
+   - serwer wbudowany: tylko `POTERX_SERVER` = `http://host:80` — aplikacja poprosi o login i hasło.
    - (opcjonalnie, do podpisu wydań) `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
-2. Zakładka **Actions → Android CI → Run workflow**. Możesz też podać linijkę w polu formularza —
-   wtedy buduje się APK dla konkretnego klienta bez zmiany sekretów.
+2. Zakładka **Actions → Android CI → Run workflow**. Możesz też podać linijkę (albo sam serwer) w
+   polu formularza — wtedy buduje się APK dla konkretnego klienta bez zmiany sekretów.
 3. Po kilku minutach pobierz artefakt `PoterxTV-….apk` i zainstaluj na TV
    (`adb install -r PoterxTV.apk` lub Downloader na Fire TV).
 
@@ -40,7 +48,7 @@ Wynik: `app/build/outputs/apk/standard/release/*.apk`.
 
 | Miejsce | Zachowanie |
 |---|---|
-| Pierwsze uruchomienie | Bez kreatora: profil + import wbudowanej listy, potem od razu aplikacja |
+| Pierwsze uruchomienie | Bez kreatora: profil + import wbudowanej listy, potem od razu aplikacja; wariant „serwer wbudowany” pokazuje wcześniej tylko ekran logowania (login, hasło) |
 | Ustawienia › Playlisty | Strona informacyjna zamiast listy źródeł (brak dodawania/edycji/usuwania) |
 | Więcej › Kopia zapasowa, Synchronizacja lokalna | Ukryte (plik `.own` / sync przeniósłby konto) |
 | Dodawanie źródła z telefonu (QR) | Niedostępne (część ukrytego ekranu źródeł) |

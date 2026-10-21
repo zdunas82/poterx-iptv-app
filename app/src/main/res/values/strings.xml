@@ -10,6 +10,8 @@
     <string name="poterx_profile_added">New profile</string>
     <string name="poterx_connecting">Connecting to your TV service…</string>
     <string name="poterx_no_account">This build carries no account. Contact your provider.</string>
+    <string name="poterx_login_title">Sign in</string>
+    <string name="poterx_login_body">Enter the username and password you received from your provider.</string>
     <string name="poterx_locked_title">Built-in playlist</string>
     <string name="poterx_locked_body">%1$s comes with your playlist built in. It cannot be viewed, changed, exported or copied to another device from here. If your channels stop working, contact your provider.</string>
 </resources>

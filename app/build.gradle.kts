@@ -99,8 +99,10 @@ android {
         //   2. Gradle properties poterx.playlistUrl / poterx.server / poterx.username / poterx.password
         //   3. poterx.properties in the project root (gitignored) with the same keys
         // A playlist link is accepted in every form a panel hands out (get.php?username=…,
-        // /playlist/USER/PASS/m3u_plus, /live/USER/PASS/…). With no account at all the build is a
-        // plain OwnTV: POTERX_LOCKED is false and nothing below changes the app.
+        // /playlist/USER/PASS/m3u_plus, /live/USER/PASS/…). Two locked shapes:
+        //   server + username + password  → everything built in, the user never types anything
+        //   server only                   → the server is built in, the user types username + password
+        // With no server at all the build is a plain OwnTV: POTERX_LOCKED is false.
         val poterxProps = Properties().apply {
             val f = rootProject.file("poterx.properties")
             if (f.isFile) f.inputStream().use { load(it) }
@@ -116,14 +118,16 @@ android {
             val user = fromLink?.get(1) ?: poterxValue("POTERX_USERNAME", "poterx.username")
             val pass = fromLink?.get(2) ?: poterxValue("POTERX_PASSWORD", "poterx.password")
             val hls = fromLink?.get(3) ?: (poterxValue("POTERX_PREFER_HLS", "poterx.preferHls") == "true").let { if (it) "1" else "0" }
-            if (server.isNullOrBlank() || user.isNullOrBlank() || pass.isNullOrBlank()) null
-            else listOf(PoterxLink.normalizeServer(server), user.trim(), pass, hls)
+            // Server alone is a valid lock: the user then types only a username and password.
+            if (server.isNullOrBlank()) null
+            else listOf(PoterxLink.normalizeServer(server), user?.trim().orEmpty(), pass.orEmpty(), hls)
         }
         val poterxSealed = poterxAccount?.let { PoterxLink.seal(it.joinToString("\n")) }
         buildConfigField("boolean", "POTERX_LOCKED", (poterxSealed != null).toString())
         buildConfigField("String", "POTERX_KEY", "\"${poterxSealed?.first ?: ""}\"")
         buildConfigField("String", "POTERX_BLOB", "\"${poterxSealed?.second ?: ""}\"")
-        if (poterxAccount != null) logger.lifecycle("Poterx: building a LOCKED app for ${poterxAccount[1]} @ ${poterxAccount[0]}")
+        if (poterxAccount != null && poterxAccount[1].isNotBlank()) logger.lifecycle("Poterx: building a LOCKED app, account built in (${poterxAccount[0]})")
+        else if (poterxAccount != null) logger.lifecycle("Poterx: building a LOCKED app, server built in (${poterxAccount[0]}), the user signs in")
         else logger.lifecycle("Poterx: no account configured, building an unlocked (stock OwnTV) app")
     }
 

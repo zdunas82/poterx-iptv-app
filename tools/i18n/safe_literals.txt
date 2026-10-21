@@ -893,6 +893,7 @@
 1	technical	app/src/main/java/tv/own/owntv/player/PlayerHudControls.kt	toolPadding
 1	technical	app/src/main/java/tv/own/owntv/player/RecordingBadge.kt	rec
 1	technical	app/src/main/java/tv/own/owntv/player/RecordingBadge.kt	recPulse
+2	empty	app/src/main/java/tv/own/owntv/poterx/LockedOnboarding.kt	\0
 1	protocol	app/src/main/java/tv/own/owntv/poterx/LockedSource.kt	1
 1	technical	app/src/main/java/tv/own/owntv/poterx/LockedSource.kt	AES
 1	technical	app/src/main/java/tv/own/owntv/poterx/LockedSource.kt	AES/GCM/NoPadding

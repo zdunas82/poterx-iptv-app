@@ -7,3 +7,5 @@ poterx.playlistUrl=http://TWOJ-HOST:80/playlist/UZYTKOWNIK/HASLO/m3u_plus
 #poterx.username=UZYTKOWNIK
 #poterx.password=HASLO
 #poterx.preferHls=false
+#   c) SAM serwer — użytkownik wpisze w aplikacji tylko login i hasło (serwer pozostaje ukryty)
+#poterx.server=http://TWOJ-HOST:80

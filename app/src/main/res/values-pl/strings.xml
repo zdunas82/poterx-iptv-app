@@ -9,6 +9,8 @@
     <string name="poterx_profile_added">Nowy profil</string>
     <string name="poterx_connecting">Łączenie z Twoją telewizją…</string>
     <string name="poterx_no_account">Ta wersja nie zawiera konta. Skontaktuj się z dostawcą.</string>
+    <string name="poterx_login_title">Zaloguj się</string>
+    <string name="poterx_login_body">Wpisz login i hasło otrzymane od dostawcy.</string>
     <string name="poterx_locked_title">Wbudowana lista kanałów</string>
     <string name="poterx_locked_body">%1$s ma wbudowaną Twoją listę kanałów. Nie można jej tutaj podejrzeć, zmienić, wyeksportować ani skopiować na inne urządzenie. Jeśli kanały przestaną działać, skontaktuj się z dostawcą.</string>
 </resources>

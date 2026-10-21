@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -12,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -26,9 +28,11 @@ import org.koin.androidx.compose.koinViewModel
 import tv.own.owntv.R
 import tv.own.owntv.core.setup.SourceImporter
 import tv.own.owntv.core.sync.importProgressDisplay
+import tv.own.owntv.features.settings.StageFieldRow
 import tv.own.owntv.features.setup.SetupViewModel
 import tv.own.owntv.features.setup.displayText
 import tv.own.owntv.ui.components.BrandLockup
+import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.components.detailText
 import tv.own.owntv.ui.components.primaryText
 import tv.own.owntv.ui.stage.StageButton
@@ -40,12 +44,15 @@ import tv.own.owntv.ui.theme.stageText
 
 /**
  * Poterx: the whole first run on one screen. Stock OwnTV walks the user through the setup wizard
- * (language, display size, profile, "add a playlist" with the account typed in). A locked build has
- * nothing to ask: it creates the profile, imports the built-in account and opens the app. The only
- * screen a user can see here is the progress line, and "Try again" if the panel was unreachable.
+ * (language, display size, profile, "add a playlist" with the server typed in). A locked build
+ * never shows the server. Two shapes, decided at build time (see LockedSource):
  *
- * [addingProfile]: a second profile from the "Who's watching?" gate. The built-in playlist already
- * exists then, so it is linked to the new profile instead of being imported again.
+ *  - account built in: the profile is created, the playlist imported, the app opens. The only
+ *    thing a user can see is the progress line, and "Try again" if the panel was unreachable.
+ *  - server built in: the same, after a sign-in page asking for the username and password only.
+ *
+ * [addingProfile]: a second profile from the "Who's watching?" gate. The playlist already exists
+ * then, so it is linked to the new profile instead of being imported again.
  */
 @Composable
 fun LockedOnboarding(
@@ -60,16 +67,23 @@ fun LockedOnboarding(
     val progress by vm.progress.collectAsStateWithLifecycle()
     val appName = stringResource(R.string.app_name)
     val profileName = stringResource(if (addingProfile) R.string.poterx_profile_added else R.string.poterx_profile_default)
-    var attempt by rememberSaveable { mutableIntStateOf(0) }
     var profileId by rememberSaveable { mutableLongStateOf(-1L) }
+    // The sign-in page's fields, kept across a failed attempt so a typo is fixed, not retyped.
+    var username by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    // Each submission bumps this; the import effect below keys on it.
+    var attempt by rememberSaveable { mutableIntStateOf(0) }
+    // Whether the sign-in page is showing (server-only build, nothing submitted or the last attempt failed).
+    var signingIn by rememberSaveable { mutableStateOf(LockedSource.requiresLogin) }
 
     // 1. The profile. -1 = no avatar yet, the same default the wizard's profile step starts on.
     LaunchedEffect(Unit) {
         if (profileId < 0L) vm.createProfile(profileName, -1, isKids = false, pin = null, picture = null) { profileId = it }
     }
-    // 2. The playlist: import the built-in account, or link the copy an earlier profile imported.
-    LaunchedEffect(profileId, attempt) {
-        if (profileId < 0L || account == null) return@LaunchedEffect
+    // 2. The playlist: link the copy an earlier profile imported, else import with the built-in
+    //    account or the credentials just typed.
+    LaunchedEffect(profileId, attempt, signingIn) {
+        if (profileId < 0L || account == null || signingIn) return@LaunchedEffect
         val existing = runCatching { vm.availableExistingSources() }.getOrDefault(emptyList())
         if (existing.isNotEmpty()) {
             vm.linkExisting(existing.map { it.id }.toSet())
@@ -77,8 +91,8 @@ fun LockedOnboarding(
             vm.startXtream(
                 name = appName,
                 server = account.server,
-                username = account.username,
-                password = account.password,
+                username = account.username.ifBlank { username.trim() },
+                password = account.password.ifBlank { password },
                 preferHls = account.preferHls,
             )
         }
@@ -95,8 +109,52 @@ fun LockedOnboarding(
             verticalArrangement = Arrangement.spacedBy(20.mpx),
         ) {
             BrandLockup(markSize = 56)
-            when (val s = state) {
-                is SourceImporter.ImportState.Failed -> {
+            val s = state
+            when {
+                account == null -> Text(
+                    stringResource(R.string.poterx_no_account),
+                    style = stageText(30, 700), color = StageColors.Text, textAlign = TextAlign.Center,
+                    maxLines = 3, overflow = TextOverflow.Ellipsis,
+                )
+                signingIn -> {
+                    val first = rememberLockedFirstFocus()
+                    val canSubmit = username.isNotBlank() && password.isNotBlank()
+                    val submit = { if (canSubmit) { vm.reset(); attempt++; signingIn = false } }
+                    Text(
+                        stringResource(R.string.poterx_login_title),
+                        style = stageText(30, 700), color = StageColors.Text, textAlign = TextAlign.Center,
+                        maxLines = 2, overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        // After a failed attempt the panel's own reason replaces the invitation.
+                        if (s is SourceImporter.ImportState.Failed) s.failure.displayText() else stringResource(R.string.poterx_login_body),
+                        style = stageText(20, 500), color = if (s is SourceImporter.ImportState.Failed) StageColors.Danger else StageColors.Muted,
+                        textAlign = TextAlign.Center, maxLines = 4, overflow = TextOverflow.Ellipsis,
+                    )
+                    StageFieldRow(
+                        icon = OwnTVIcon.PERSON,
+                        label = stringResource(R.string.setup_username),
+                        value = username,
+                        onValueChange = { username = it },
+                        modifier = Modifier.fillMaxWidth().focusRequester(first),
+                    )
+                    StageFieldRow(
+                        icon = OwnTVIcon.PENCIL,
+                        label = stringResource(R.string.setup_password),
+                        value = password,
+                        onValueChange = { password = it },
+                        password = true,
+                        onDone = submit,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.mpx)) {
+                        StageButton(stringResource(R.string.setup_continue), onClick = submit, tinted = canSubmit)
+                        if (addingProfile) {
+                            StageButton(stringResource(R.string.common_cancel), onClick = { vm.cancelImport(); onCancel() })
+                        }
+                    }
+                }
+                s is SourceImporter.ImportState.Failed -> {
                     val first = rememberLockedFirstFocus()
                     Text(
                         stringResource(R.string.setup_import_failed),
@@ -111,7 +169,8 @@ fun LockedOnboarding(
                     Row(horizontalArrangement = Arrangement.spacedBy(16.mpx)) {
                         StageButton(
                             stringResource(R.string.setup_try_again_caps),
-                            onClick = { vm.reset(); attempt++ },
+                            // A server-only build goes back to the sign-in page (the password may be the reason).
+                            onClick = { vm.reset(); if (LockedSource.requiresLogin) signingIn = true else attempt++ },
                             tinted = true,
                             modifier = Modifier.focusRequester(first),
                         )
@@ -123,7 +182,7 @@ fun LockedOnboarding(
                 else -> {
                     val display = progress?.importProgressDisplay()
                     Text(
-                        if (account == null) stringResource(R.string.poterx_no_account) else stringResource(R.string.poterx_connecting),
+                        stringResource(R.string.poterx_connecting),
                         style = stageText(30, 700), color = StageColors.Text, textAlign = TextAlign.Center,
                         maxLines = 2, overflow = TextOverflow.Ellipsis,
                     )
