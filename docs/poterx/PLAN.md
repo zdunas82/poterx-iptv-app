@@ -15,45 +15,37 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   `KEYSTORE_*` (bez nich klucz jednorazowy), wydanie na tag `v*`.
 - Instrukcja dla klienta (`instrukcja-klienta.html`).
 
-## Etap 1 — pierwsze wydanie testowe (teraz)
-- [ ] Sekrety w repo: `POTERX_SERVER`, `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
-- [ ] Tag `v0.1.0` → wydanie → test na Google TV Streamer 4K: logowanie, lista, EPG, catch‑up,
-      zapping, powrót z uśpienia, start na ostatnim kanale, karta aktualizacji.
-- [ ] Lista uwag z testu (wygląd, szybkość, stabilność) → poprawki punkt po punkcie.
+## Wydania
+- **v0.1.0** (2026‑10‑21): pierwsze wydanie testowe, logowanie, lista, EPG, start na ostatnim kanale.
+- **v0.1.1**: polski start, Auto frame rate wyłączone, EPG pobierane od razu po zalogowaniu,
+  „Poterx TV” we wszystkich komunikatach, dolny pasek kanału (picon, teraz/następnie, zegar).
+
+## v0.1.2 — po testach na Streamerze (dni)
+- [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.
+- [ ] Pomiar zimnego startu i zappingu z logów `OwnTVPerf` na urządzeniu; lista wąskich gardeł.
 - [ ] Krótki kod Downloadera (aftv.news) i podmiana w instrukcji.
 
-## Etap 2 — zamknięcie linii i obsługa klienta
-- [ ] **Własny User‑Agent** (`PoterxTV/<wersja>`) na źródle i w odtwarzaczu + na panelu XUI.one
-      blokada innych agentów → linia działa tylko w tej aplikacji (TiviMate/Smarters odpadają).
-- [ ] Ekran **Konto** w Ustawieniach: status i data ważności z `user_info` (XUI zwraca `exp_date`,
-      `max_connections`, `active_cons`), czytelny komunikat „konto wygasło” z kontaktem do dostawcy.
-- [ ] **Wyloguj / zmień dane logowania** (usunięcie źródła i powrót do ekranu logowania) z PIN‑em,
-      żeby klient nie zrobił tego przypadkiem.
-- [ ] **Dane kontaktowe dostawcy** wbudowane przy budowaniu (telefon/Telegram) i pokazywane przy
-      błędach logowania oraz w sekcji Więcej.
-- [ ] Testy jednostkowe `PoterxLink` (parser linijek) i `LockedSource` (szyfrowanie), uruchamiane w CI.
+## v0.2 — odchudzenie i zamknięcie (1–2 tygodnie)
+- [ ] Wyłączone domyślnie w wersji zamkniętej: Sport Hub, pogoda, Trending, metadane TMDB,
+      OpenSubtitles (serwery OwnTV). Mniej zapytań przy starcie, szybszy ekran główny.
+- [ ] Mniejszy APK: tylko `pl` i `en` w `localeFilters`, usunięcie nieużywanych czcionek.
+- [ ] Własny User‑Agent `PoterxTV/<wersja>` + blokada innych agentów na panelu XUI.one.
+- [ ] Ekran **Konto** (status, ważność, limit połączeń z `user_info`) i **Wyloguj** za PIN‑em.
+- [ ] Dane kontaktowe dostawcy wbudowane przy budowaniu; pokazywane przy błędach logowania.
+- [ ] Testy jednostkowe `PoterxLink` i `LockedSource` w CI.
 
-## Etap 3 — komunikaty i zdalna konfiguracja
-- [ ] Mały plik JSON na Twoim serwerze (adres wbudowany w APK): ogłoszenia dla klientów („przerwa
-      techniczna 22:00–23:00”), minimalna wymagana wersja (wymuszenie aktualizacji), opcjonalnie
-      alternatywny adres serwera na wypadek zmiany domeny. Wzorzec z paneli Smarters/OnePanel, ale
-      bez reklam.
-- [ ] Zgłaszanie błędów: eksport dziennika OwnTV jest ręczny; dodać wysyłkę raportu jednym
-      przyciskiem na Twój serwer (bez danych osobowych, tylko log odtwarzania i wersja).
+## v0.3 — obsługa klientów na odległość
+- [ ] Plik JSON na serwerze dostawcy: ogłoszenia, minimalna wersja (wymuszona aktualizacja),
+      zapasowy adres serwera.
+- [ ] Wysyłka raportu błędu jednym przyciskiem.
 
-## Etap 4 — VPS, własny hosting i VPN (odłożone decyzją z 2026‑10‑21)
-- [ ] VPS (np. Hetzner CX22) z HTTPS: APK, plik aktualizacji, instrukcja; repo GitHub na prywatne.
-- [ ] Własny updater (JSON: wersja, adres APK, opis zmian) zamiast API GitHuba.
-- [ ] **WireGuard**: biblioteka `com.wireguard.android:tunnel`, przełącznik w Ustawieniach,
-      autostart, tunel tylko dla tej aplikacji (`addAllowedApplication`), konfiguracja per klient
-      pobierana z Twojego serwera, skrypt na VPS do generowania kluczy. HTTPS na panelu XUI.one.
+## v0.4 — tryb „Poterx klasyczny” (TiviMate)
+- [ ] OK na obrazie → lista kanałów nałożona na wideo (grupy, teraz/następnie, postęp),
+      lewo/prawo → program kanału, Przewodnik → siatka nad obrazem, ulubione, ostatni kanał pod Back.
 
-## Etap 5 — wygląd i wygoda (po pierwszych testach)
-- [ ] Własna grafika: logo/ikona od Ciebie zamiast wygenerowanego znaku, domyślny akcent i motyw.
-- [ ] Domyślne ustawienia dla skrzynki TV: podgląd kanału, tryb opóźnienia, numeracja kanałów,
-      ekran główny vs. prosty tryb „tylko Live TV” (ukrycie Filmów/Seriali, gdy panel ich nie ma).
-- [ ] Kanał „Następne” na ekranie głównym Google TV (OwnTV to wspiera; sprawdzić w trybie zamkniętym).
-- [ ] Opcjonalnie wymuszony polski przy pierwszym uruchomieniu niezależnie od języka systemu.
+## v0.5 — infrastruktura (odłożone decyzją z 2026‑10‑21)
+- [ ] VPS z HTTPS: APK, aktualizacje, instrukcja; repo prywatne; własny updater (JSON).
+- [ ] WireGuard: `com.wireguard.android:tunnel`, tunel tylko dla aplikacji, klucze per klient.
 
 ## Stałe
 - Co kilka tygodni `git merge` z upstreamu OwnTV i podbicie `owntvCore`; nasze zmiany są małe i
