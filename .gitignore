@@ -1,0 +1,16 @@
+# Gradle / Android
+.gradle/
+build/
+*/build/
+local.properties
+.cxx/
+*.apk
+*.aab
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.kotlin/
+# secrets
+*.env
+secrets.properties
