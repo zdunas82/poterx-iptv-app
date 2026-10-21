@@ -97,6 +97,8 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         // this value, so the line changes nothing today — it is here so the television names its own
         // repository instead of relying on core to guess it, the same as the phone app does. A
         // default that happens to be right for one app is a trap for every other one.
+        // Poterx: the in-app updater asks THIS repository's Releases, never OwnTV's, so a locked
+        // build only ever offers a Poterx release signed with the Poterx key.
         tv.own.owntv.core.CoreBuildInfo.releaseRepo = "zdunas82/poterx-iptv-app"
         // Fixed for this process before any player exists: the setting applies only after a restart.
         tv.own.owntv.core.player.FfmpegAudioSetting.load(this)

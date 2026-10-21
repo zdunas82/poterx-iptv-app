@@ -53,7 +53,7 @@ Wynik: `app/build/outputs/apk/standard/release/*.apk`.
 | EPG | Przewodnik z `xmltv.php` Twojego panelu pobiera się sam zaraz po zalogowaniu i odświeża według ustawień Ustawienia › Źródła EPG |
 | Więcej › Kopia zapasowa, Synchronizacja lokalna | Ukryte (plik `.own` / sync przeniósłby konto) |
 | Dodawanie źródła z telefonu (QR) | Niedostępne (część ukrytego ekranu źródeł) |
-| Sprawdzanie aktualizacji | Ukryte; updater wskazuje to repo, nie OwnTV |
+| Aktualizacje | Wbudowany updater sprawdza **tylko wydania tego repo** (tag `v*`): karta „Dostępna aktualizacja” przy starcie, instalacja jednym OK. Wymaga stałego klucza (`KEYSTORE_*`) |
 | Ikona aplikacji | Wybór ukryty (pozostałe ikony niosą markę OwnTV) |
 | Nowy profil | Automatycznie podpina wbudowaną listę |
 
