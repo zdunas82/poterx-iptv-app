@@ -898,6 +898,7 @@
 1	technical	app/src/main/java/tv/own/owntv/poterx/LockedSource.kt	AES
 1	technical	app/src/main/java/tv/own/owntv/poterx/LockedSource.kt	AES/GCM/NoPadding
 1	empty	app/src/main/java/tv/own/owntv/poterx/LockedSourcesScreen.kt	\0
+1	locale	app/src/main/java/tv/own/owntv/poterx/PoterxChannelGuide.kt	EEEd
 1	preference-key	app/src/main/java/tv/own/owntv/poterx/PoterxDefaults.kt	locale_v1
 1	locale	app/src/main/java/tv/own/owntv/poterx/PoterxDefaults.kt	pl
 1	preference-key	app/src/main/java/tv/own/owntv/poterx/PoterxDefaults.kt	playback_v1

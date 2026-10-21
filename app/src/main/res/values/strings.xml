@@ -17,6 +17,9 @@
     <string name="poterx_last_refresh">Last refresh: %1$s</string>
     <string name="poterx_refresh_auto">Automatic refresh</string>
     <string name="poterx_refresh_auto_description">How often the channel list is downloaded again by itself.</string>
+    <string name="poterx_guide_hint_live">OK: back to live · ◀ ▶ programmes · Back: close</string>
+    <string name="poterx_guide_hint_archive">OK: play from the archive · ◀ ▶ programmes · Back: close</string>
+    <string name="poterx_guide_hint_browse">◀ ▶ programmes · Back: close</string>
     <string name="poterx_locked_title">Built-in playlist</string>
     <string name="poterx_locked_body">%1$s comes with your playlist built in. It cannot be viewed, changed, exported or copied to another device from here. If your channels stop working, contact your provider.</string>
 </resources>

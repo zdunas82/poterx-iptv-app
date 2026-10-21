@@ -1859,6 +1859,22 @@ class LiveViewModel(
      *  to call this — see [LiveTimeshift.clear]. */
     private fun clearTimeshift() { timeshift.clear() }
 
+    /**
+     * Poterx: the channel's stored guide for the in-player programme strip, two days back and two
+     * days ahead, on the user's clock (EPG offset applied). Empty for a channel with no guide match.
+     */
+    suspend fun channelProgrammes(ch: ChannelEntity): List<tv.own.owntv.core.database.entity.EpgProgrammeEntity> =
+        withContext(Dispatchers.IO) {
+            val cust = custom.value
+            val key = (cust.epgMatchResolver.epgIdFor(ch) ?: ch.epgChannelId)
+                ?.trim()?.lowercase()?.takeIf { it.isNotEmpty() } ?: return@withContext emptyList()
+            val shift = tv.own.owntv.core.epg.EpgShift.minutesFor(cust, ch, epgOffset.value)
+            val at = tv.own.owntv.core.epg.EpgShift.toStored(System.currentTimeMillis(), shift)
+            val span = 2L * 24 * 3600_000L
+            val rows = runCatching { epgDao.programmesForChannel(key, at - span, at + span) }.getOrDefault(emptyList())
+            tv.own.owntv.core.epg.EpgShift.apply(rows.sortedBy { it.startMs }, shift)
+        }
+
     /** Jump back to the real-time live edge (back on the fast ExoPlayer engine). */
     fun goToLive() {
         clearTimeshift()

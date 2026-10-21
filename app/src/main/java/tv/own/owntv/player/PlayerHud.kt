@@ -213,6 +213,8 @@ fun PlayerHud(
     // Poterx: a full-width banner along the bottom of the picture that replaces the top-left zap card
     // while the controls are hidden. Called with the channel's title, number line and logo.
     zapBanner: (@Composable (title: String?, subtitle: String?, logoUrl: String?) -> Unit)? = null,
+    // Poterx: a long press of OK while the controls are hidden (the short press still shows them).
+    onLongOk: (() -> Unit)? = null,
     // The archive's own wall-clock instant while catch-up/rewind is playing; null means the picture is
     // the present, and only the real clock shows. Drives the second, framed clock at top centre.
     // Lambda for the same reason as [timeshiftOffsetSec]: this instant advances every second too.
@@ -302,6 +304,9 @@ fun PlayerHud(
     val canZap = onChannelUp != null && onChannelDown != null
     var channelFlash by remember { mutableIntStateOf(0) }
     var showFlash by remember { mutableStateOf(false) }
+    // Poterx long-OK: the press is decided on release (or on the first repeat past the hold time).
+    var okHeld by remember { mutableStateOf(false) }
+    var okLongFired by remember { mutableStateOf(false) }
     LaunchedEffect(channelFlash) { if (channelFlash > 0) { showFlash = true; delay(if (zapBanner != null) 5000 else 3000); showFlash = false } }
 
     // Engine-switch confirmation toast: a brief "Switched to MPV/ExoPlayer" at the bottom-center when the
@@ -559,6 +564,28 @@ fun PlayerHud(
                         }
                     }
                 }
+            }
+            // Poterx: OK with the controls hidden. A short press shows the controls on release; holding
+            // it (the first key repeat past the hold time) opens the channel's programme guide instead.
+            if (onLongOk != null && !controlsVisible && !inert && dialog == HudDialog.NONE && !digitsActive && onToastOk == null &&
+                (e.key == Key.DirectionCenter || e.key == Key.Enter || e.key == Key.NumPadEnter)
+            ) {
+                val native = e.nativeKeyEvent
+                when (e.type) {
+                    KeyEventType.KeyDown -> {
+                        if (native.repeatCount == 0) { okHeld = true; okLongFired = false }
+                        else if (okHeld && !okLongFired && native.eventTime - native.downTime >= PLAYER_SHORTCUT_LONG_PRESS_MS) {
+                            okLongFired = true
+                            onLongOk()
+                        }
+                    }
+                    KeyEventType.KeyUp -> {
+                        if (okHeld && !okLongFired) controlsVisible = true
+                        okHeld = false
+                        okLongFired = false
+                    }
+                }
+                return@onPreviewKeyEvent true
             }
             // ---- Existing key handling (unchanged, but skip for digit KeyUp already consumed above) ----
             if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false

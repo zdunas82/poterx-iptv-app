@@ -316,6 +316,8 @@ fun OwnTVShell(
     var showChannelList by remember { mutableStateOf(false) }
     // In-player watch-history list (Right while controls hidden, live only).
     var showHistoryList by remember { mutableStateOf(false) }
+    // Poterx: the playing channel's programme guide (long OK while controls hidden, live only).
+    var showChannelGuide by remember { mutableStateOf(false) }
     // Multiview: the grid, while it is up, and which tile is waiting for a channel to be picked.
     val multiviewEnabled by settingsRepo.multiviewEnabled.collectAsStateWithLifecycle(false)
     val recordWatchingEnabled by settingsRepo.recordWhatImWatching.collectAsStateWithLifecycle(false)
@@ -429,6 +431,11 @@ fun OwnTVShell(
         value = runCatching { liveVm.historyChannels() }.getOrDefault(emptyList())
     }
     val historyChannels = remember(historyEntries) { historyEntries.map { it.channel } }
+    // Poterx: the guide strip's rows, re-read when it opens and after every zap.
+    val channelGuideProgrammes by produceState(emptyList<tv.own.owntv.core.database.entity.EpgProgrammeEntity>(), showChannelGuide, previewChannel?.id) {
+        if (!showChannelGuide) { value = emptyList(); return@produceState }
+        value = previewChannel?.let { runCatching { liveVm.channelProgrammes(it) }.getOrDefault(emptyList()) } ?: emptyList()
+    }
     val historyWatchedAt = remember(historyEntries) { historyEntries.associate { it.channel.id to it.watchedAt } }
     val historyNowPlaying = overlayNowPlaying // one shared map; the history rail adds to it below
     LaunchedEffect(historyChannels) { liveVm.ensureNowPlaying(historyChannels) }
@@ -1701,6 +1708,8 @@ fun OwnTVShell(
                             tv.own.owntv.features.shell.components.ZapGuideLines(guide)
                         }
                     } else null,
+                    // Poterx: long OK opens the channel's own programme guide over the picture.
+                    onLongOk = if (isLiveChannel && tv.own.owntv.poterx.LockedSource.enabled) { { showChannelGuide = true } } else null,
                     // Poterx: the set-top-box style banner along the bottom instead of the top-left card.
                     zapBanner = if (isLiveChannel && tv.own.owntv.poterx.LockedSource.enabled) {
                         { title, subtitle, logoUrl ->
@@ -1832,6 +1841,19 @@ fun OwnTVShell(
                     )
                 }
                 // Left — the playing channel's own provider category.
+                // Poterx: the channel's programme guide, drawn over the player like the channel list.
+                if (showChannelGuide && isLiveChannel) {
+                    previewChannel?.let { ch ->
+                        tv.own.owntv.poterx.PoterxChannelGuide(
+                            channel = ch,
+                            programmes = channelGuideProgrammes,
+                            onPlayArchive = { p -> showChannelGuide = false; liveVm.playCatchupProgramme(ch, p) },
+                            onGoLive = { showChannelGuide = false; liveVm.goToLive() },
+                            onDismiss = { showChannelGuide = false },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
                 if (showChannelList && isLiveChannel) {
                     if (showCategoryBrowser) {
                         // Second Left — every Live TV category.
