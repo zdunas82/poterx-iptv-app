@@ -2531,9 +2531,9 @@ private data class RootRow(
     val recommended: Int = -1,
     /** ◀ ▶ on a stepper or segmented value. */
     val onStep: ((Int) -> Unit)? = null,
-    val onClick: () -> Unit,
     /** Poterx: a row a locked build leaves out (see LockedSource). */
     val hidden: Boolean = false,
+    val onClick: () -> Unit,
 ) : RootItem {
     /**
      * Honest chevrons: the arrow promises another screen, so only the rows that open one carry it.
