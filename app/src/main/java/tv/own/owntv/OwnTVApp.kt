@@ -62,6 +62,8 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
      * every Locale.getDefault() reader still depend on it.
      */
     override fun attachBaseContext(base: Context) {
+        // Poterx: a locked build starts in Polish unless a language was already chosen.
+        tv.own.owntv.poterx.PoterxDefaults.applyLocale(base)
         val tag = tv.own.owntv.core.i18n.LocaleStore.from(base).readBlocking()
         tv.own.owntv.core.i18n.AppLocale.applyGlobally(tag)
         super.attachBaseContext(tv.own.owntv.core.i18n.AppLocale.wrap(base, tag))
@@ -137,6 +139,8 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
                 GlobalContext.get().get<tv.own.owntv.core.settings.SettingsRepository>().applyStageDefaults()
             }
         }
+        // Poterx: set-top-box playback defaults (Auto frame rate off, its prompt dismissed), once per install.
+        tv.own.owntv.poterx.PoterxDefaults.applySettings(this, appScope, GlobalContext.get().get())
         // Sports: core decides from Auto rebuild whether the stored board is due ("on every app start",
         // or older than the chosen hours). It reads one small file and touches no database.
         appScope.launch {
