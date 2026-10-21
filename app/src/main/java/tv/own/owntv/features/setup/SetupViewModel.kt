@@ -79,6 +79,20 @@ class SetupViewModel(
     fun dismissPendingEpg() { pendingEpgSource = null; _epgSync.value = tv.own.owntv.features.settings.EpgSyncUi.Hidden }
 
     /**
+     * Poterx: download a playlist's own guide (Xtream `xmltv.php`) right away, no question asked.
+     * The same registration + sync the wizard's "Add a TV guide" runs, but in [appScope] so leaving
+     * the onboarding screen for the shell never cancels it. Idempotent: an existing EPG source with
+     * the same URL is reused.
+     */
+    fun syncGuideNow(source: SourceEntity) {
+        appScope.launch {
+            runCatching {
+                tv.own.owntv.features.settings.runSemiAutoEpgSync(source, epgRepository, epgSourceStore) { _epgSync.value = it }
+            }
+        }
+    }
+
+    /**
      * "Run in background" for the semi-auto EPG sync: enter the app now while the guide keeps
      * downloading. The sync launched by [syncPendingEpg] runs in this activity-scoped [viewModelScope],
      * so it survives leaving the wizard — exactly like the playlist [continueInBackground]. We only

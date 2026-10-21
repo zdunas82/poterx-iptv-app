@@ -110,14 +110,14 @@ fun LockedOnboarding(
         }
     }
     // 3. Straight into the app; the wizard's "All set" page has nothing a locked build needs to say.
-    //    The panel's own guide (xmltv.php) is registered by the import; the wizard would ask before
-    //    downloading it, a locked build just does, in the background, while the app opens.
+    //    The wizard would ask before downloading the panel's guide (xmltv.php); a locked build just
+    //    starts it, in the background, while the app opens. Linking an existing playlist (a second
+    //    profile) carries no source here, and its guide is already registered from the first import.
     LaunchedEffect(state) {
-        if (state is SourceImporter.ImportState.Success) {
-            kotlinx.coroutines.delay(250) // the view model notes the guide feed right after the import's own coroutine ends
-            vm.syncPendingEpg()
-            vm.syncEpgInBackground(onDone)
-        }
+        val done = state as? SourceImporter.ImportState.Success ?: return@LaunchedEffect
+        done.source?.let { vm.syncGuideNow(it) }
+        vm.dismissPendingEpg()
+        vm.finish(onDone)
     }
 
     Box(modifier.fillMaxSize().stageBackground(stageAccent.accent), contentAlignment = Alignment.Center) {
