@@ -57,3 +57,6 @@ replay_pid*.log
 
 # Local-only archive (old detailed changelogs etc.), never committed
 /archive/
+
+# Poterx: the locked account for local builds — NEVER commit (CI takes it from repository secrets)
+poterx.properties

@@ -379,14 +379,25 @@ open class MainActivity : ComponentActivity() {
                         when {
                             profile == null || !profilesLoaded -> Unit // active id / Room list loading
                             // Adding a profile from the gate → onboard the new profile.
-                            addingProfile -> Onboarding(
+                            addingProfile -> if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedOnboarding(
+                                addingProfile = true,
+                                onDone = { profileId -> gateSession.completeAddingProfile(profileId) },
+                                onCancel = { gateSession.cancelAddingProfile() },
+                                modifier = Modifier.fillMaxSize(),
+                            ) else Onboarding(
                                 firstRun = false,
                                 onDone = { profileId -> gateSession.completeAddingProfile(profileId) },
                                 onCancel = { gateSession.cancelAddingProfile() },
                                 modifier = Modifier.fillMaxSize(),
                             )
                             // First run (no profile yet) → full onboarding.
-                            profile < 0L -> Onboarding(
+                            // Poterx: a locked build skips the wizard — the account is built in (LockedOnboarding).
+                            profile < 0L -> if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedOnboarding(
+                                addingProfile = false,
+                                onDone = { profileId -> gateSession.authenticateProfile(profileId) },
+                                onCancel = {},
+                                modifier = Modifier.fillMaxSize(),
+                            ) else Onboarding(
                                 firstRun = true,
                                 onDone = { profileId -> gateSession.authenticateProfile(profileId) },
                                 onCancel = {},
@@ -395,7 +406,12 @@ open class MainActivity : ComponentActivity() {
                             // A loaded list that does not contain the persisted active id is also
                             // recovery/onboarding, never permission to enter OwnTVShell. This covers
                             // both an empty restore window and a stale id left by an interrupted restore.
-                            !activeProfileKnown -> Onboarding(
+                            !activeProfileKnown -> if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedOnboarding(
+                                addingProfile = false,
+                                onDone = { profileId -> gateSession.authenticateProfile(profileId) },
+                                onCancel = {},
+                                modifier = Modifier.fillMaxSize(),
+                            ) else Onboarding(
                                 firstRun = false,
                                 onDone = { profileId -> gateSession.authenticateProfile(profileId) },
                                 onCancel = {},

@@ -106,6 +106,21 @@ private val PixelPower = Color(CorePixelMark.POWER)
  */
 @Composable
 fun Wordmark(width: Dp, modifier: Modifier = Modifier, tv: Color = stageAccent.accent, own: Color = WordmarkCream) {
+    // Poterx: the brand is the app name, set in the wordmark's own box so every lockup keeps its layout.
+    if (tv.own.owntv.poterx.LockedSource.enabled) {
+        Box(modifier.width(width).height(width * 182f / 988f), contentAlignment = Alignment.CenterStart) {
+            androidx.tv.material3.Text(
+                androidx.compose.ui.res.stringResource(R.string.app_name),
+                style = androidx.compose.ui.text.TextStyle(
+                    fontSize = androidx.compose.ui.unit.TextUnit(width.value * 0.155f, androidx.compose.ui.unit.TextUnitType.Sp),
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    letterSpacing = androidx.compose.ui.unit.TextUnit(-0.02f, androidx.compose.ui.unit.TextUnitType.Em),
+                ),
+                color = own, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+        }
+        return
+    }
     Box(modifier.width(width).height(width * 182f / 988f)) {
         Image(painterResource(R.drawable.owntv_wordmark_own), null, Modifier.fillMaxSize(), colorFilter = ColorFilter.tint(own))
         Image(painterResource(R.drawable.owntv_wordmark_tv), null, Modifier.fillMaxSize(), colorFilter = ColorFilter.tint(tv))

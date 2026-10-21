@@ -406,10 +406,11 @@ fun SettingsScreen(
     CompositionLocalProvider(tv.own.owntv.features.settings.LocalSettingsSearch provides openSearch) {
     when (tab) {
         SettingsTab.LANGUAGE -> { LanguageSettingsScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
-        SettingsTab.SOURCES -> { ManageSourcesScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
+        // Poterx: on a locked build the pages that could show, edit or copy the account are one info page.
+        SettingsTab.SOURCES -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedInfoScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) else ManageSourcesScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
         SettingsTab.EPG -> { tv.own.owntv.features.settings.EpgSourcesScreen(onBack = { tab = SettingsTab.ROOT; consumeEpgAdd = false }, modifier = modifier, startOnAdd = consumeEpgAdd) }
-        SettingsTab.BACKUP -> { BackupScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) }
-        SettingsTab.LOCAL_SYNC -> { LocalSyncScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) }
+        SettingsTab.BACKUP -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedInfoScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) else BackupScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) }
+        SettingsTab.LOCAL_SYNC -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedInfoScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) else LocalSyncScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) }
         SettingsTab.CUSTOMIZE -> { CustomizeScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
         SettingsTab.HOME -> { HomeSettingsScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
         SettingsTab.NETWORK -> { tv.own.owntv.features.settings.NetworkSettingsScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
@@ -487,6 +488,8 @@ fun SettingsScreen(
         RootRow(
             "quick_check_update", TileTone.SECONDARY, OwnTVIcon.DOWNLOADS,
             title = stringResource(R.string.settings_quick_check_update),
+            // Poterx: a locked build updates only through its own provider, never from upstream releases.
+            hidden = tv.own.owntv.poterx.LockedSource.enabled,
             chip = stringResource(if (updateCheckOnStart) R.string.common_on else R.string.common_off),
             chipTone = if (updateCheckOnStart) TileTone.PRIMARY else TileTone.SECONDARY,
             onClick = { settingsVm.setUpdateCheckOnStart(!updateCheckOnStart) },
@@ -746,6 +749,7 @@ fun SettingsScreen(
         ),
         RootRow(
             "app_icon", TileTone.SECONDARY, OwnTVIcon.PALETTE,
+            hidden = tv.own.owntv.poterx.LockedSource.enabled, // Poterx: the other icons carry the OwnTV brand
             title = stringResource(R.string.settings_app_icon), desc = stringResource(R.string.settings_app_icon_summary),
             chip = stringResource(appIcon.label), chipTone = TileTone.SECONDARY,
             focus = appIconRowFocus,
@@ -769,6 +773,7 @@ fun SettingsScreen(
         ),
         RootRow(
             "check_updates", TileTone.PRIMARY, OwnTVIcon.REFRESH,
+            hidden = tv.own.owntv.poterx.LockedSource.enabled,
             title = stringResource(R.string.settings_check_updates), desc = stringResource(R.string.settings_check_updates_description),
             chip = "v${tv.own.owntv.BuildConfig.VERSION_NAME}",
             focus = updateRowFocus,
@@ -776,6 +781,7 @@ fun SettingsScreen(
         ),
         RootRow(
             "update_startup", TileTone.SECONDARY, OwnTVIcon.REFRESH,
+            hidden = tv.own.owntv.poterx.LockedSource.enabled,
             title = stringResource(R.string.settings_update_startup), desc = stringResource(R.string.settings_update_startup_description),
             chip = if (updateCheckOnStart) stringResource(R.string.common_on) else stringResource(R.string.common_off),
             chipTone = if (updateCheckOnStart) TileTone.PRIMARY else TileTone.SECONDARY,
@@ -797,7 +803,7 @@ fun SettingsScreen(
         ),
         // About and the error log live in More. A page of facts and a log are
         // not preferences; both are More rows now, opening the very same dialogs.
-    )
+    ).filterNot { it is RootRow && it.hidden }
 
     // --- Two-pane root: the flat list above is still the single source of truth for order, tone,
     // icon, chip and click of every row. Here it is only *sliced* into (heading, its rows) so the
@@ -1056,9 +1062,9 @@ fun SettingsScreen(
             SettingsSearchEntry(stringResource(R.string.settings_group_app), stringResource(R.string.settings_app_startup), stringResource(R.string.settings_search_keywords_startup), OwnTVIcon.POWER, TileTone.SECONDARY,
                 chip = startupLabel(startupMode)) { saveScroll(); dialogReturn = searchFieldFocus; showStartup = true },
             SettingsSearchEntry(stringResource(R.string.settings_group_app), stringResource(R.string.settings_check_updates), stringResource(R.string.settings_search_keywords_updates), OwnTVIcon.REFRESH, TileTone.PRIMARY,
-                chip = "v${tv.own.owntv.BuildConfig.VERSION_NAME}") { saveScroll(); dialogReturn = searchFieldFocus; showUpdate = true },
+                chip = "v${tv.own.owntv.BuildConfig.VERSION_NAME}") { saveScroll(); dialogReturn = searchFieldFocus; showUpdate = true }.takeUnless { tv.own.owntv.poterx.LockedSource.enabled },
             SettingsSearchEntry(stringResource(R.string.settings_group_app), stringResource(R.string.settings_update_startup), stringResource(R.string.settings_search_keywords_update_auto), OwnTVIcon.REFRESH, TileTone.SECONDARY,
-                chip = if (updateCheckOnStart) stringResource(R.string.common_on) else stringResource(R.string.common_off), chipTone = if (updateCheckOnStart) TileTone.PRIMARY else TileTone.SECONDARY, showChevron = false) { settingsVm.setUpdateCheckOnStart(!updateCheckOnStart) },
+                chip = if (updateCheckOnStart) stringResource(R.string.common_on) else stringResource(R.string.common_off), chipTone = if (updateCheckOnStart) TileTone.PRIMARY else TileTone.SECONDARY, showChevron = false) { settingsVm.setUpdateCheckOnStart(!updateCheckOnStart) }.takeUnless { tv.own.owntv.poterx.LockedSource.enabled },
         )
         // Rows that already have a bespoke entry above. Those are richer than a generic one — they flip
         // in place, or carry a confirmation the search field has to own — so the catalogue skips them
@@ -2076,7 +2082,7 @@ private fun CatchupSourceValueHost(settingsVm: SettingsViewModel, src: tv.own.ow
 }
 
 /** The repository line More › About shows. */
-internal const val GITHUB_REPO = "github.com/ahXN00/OwnTV"
+internal const val GITHUB_REPO = "github.com/zdunas82/poterx-iptv-app"
 internal const val TELEGRAM_LINK = "t.me/owntvplayer"
 
 /**
@@ -2526,6 +2532,8 @@ private data class RootRow(
     /** ◀ ▶ on a stepper or segmented value. */
     val onStep: ((Int) -> Unit)? = null,
     val onClick: () -> Unit,
+    /** Poterx: a row a locked build leaves out (see LockedSource). */
+    val hidden: Boolean = false,
 ) : RootItem {
     /**
      * Honest chevrons: the arrow promises another screen, so only the rows that open one carry it.

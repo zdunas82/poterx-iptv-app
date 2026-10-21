@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="content_search_channels">Search channels\u2026</string>
+    <string name="app_name" translatable="false">Poterx TV</string>
+    <string name="content_search_channels">Search channels…</string>
     <string name="content_search_movies">Search movies…</string>
     <string name="content_search_series">Search series…</string>
+
+    <!-- Poterx: locked build -->
+    <string name="poterx_profile_default">Home</string>
+    <string name="poterx_profile_added">New profile</string>
+    <string name="poterx_connecting">Connecting to your TV service…</string>
+    <string name="poterx_no_account">This build carries no account. Contact your provider.</string>
+    <string name="poterx_locked_title">Built-in playlist</string>
+    <string name="poterx_locked_body">%1$s comes with your playlist built in. It cannot be viewed, changed, exported or copied to another device from here. If your channels stop working, contact your provider.</string>
 </resources>

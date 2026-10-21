@@ -44,7 +44,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "tv.own.owntv"
+        // Poterx: its own install identity, so it sits next to a stock OwnTV instead of replacing it.
+        applicationId = "tv.poterx.app"
         minSdk = 26
         targetSdk = 36
         // CI injects these from the git tag (see .github/workflows/android.yml) so releases never
@@ -91,6 +92,39 @@ android {
         buildConfigField("String", "TMDB_EDGE_KEY", "\"${edgeKey.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ---- Poterx locked source -------------------------------------------------------------
+        // The one Xtream account this build is locked to. NEVER in the repo. Sources, first wins:
+        //   1. env POTERX_PLAYLIST_URL / POTERX_SERVER + POTERX_USERNAME + POTERX_PASSWORD (CI secrets)
+        //   2. Gradle properties poterx.playlistUrl / poterx.server / poterx.username / poterx.password
+        //   3. poterx.properties in the project root (gitignored) with the same keys
+        // A playlist link is accepted in every form a panel hands out (get.php?username=…,
+        // /playlist/USER/PASS/m3u_plus, /live/USER/PASS/…). With no account at all the build is a
+        // plain OwnTV: POTERX_LOCKED is false and nothing below changes the app.
+        val poterxProps = Properties().apply {
+            val f = rootProject.file("poterx.properties")
+            if (f.isFile) f.inputStream().use { load(it) }
+        }
+        fun poterxValue(env: String, property: String): String? =
+            System.getenv(env)?.takeIf { it.isNotBlank() }
+                ?: providers.gradleProperty(property).orNull?.takeIf { it.isNotBlank() }
+                ?: poterxProps.getProperty(property)?.takeIf { it.isNotBlank() }
+        val poterxAccount: List<String>? = run {
+            val link = poterxValue("POTERX_PLAYLIST_URL", "poterx.playlistUrl")?.trim()?.trimEnd('.', ',')
+            val fromLink = link?.let { PoterxLink.parse(it) }
+            val server = fromLink?.get(0) ?: poterxValue("POTERX_SERVER", "poterx.server")
+            val user = fromLink?.get(1) ?: poterxValue("POTERX_USERNAME", "poterx.username")
+            val pass = fromLink?.get(2) ?: poterxValue("POTERX_PASSWORD", "poterx.password")
+            val hls = fromLink?.get(3) ?: (poterxValue("POTERX_PREFER_HLS", "poterx.preferHls") == "true").let { if (it) "1" else "0" }
+            if (server.isNullOrBlank() || user.isNullOrBlank() || pass.isNullOrBlank()) null
+            else listOf(PoterxLink.normalizeServer(server), user.trim(), pass, hls)
+        }
+        val poterxSealed = poterxAccount?.let { PoterxLink.seal(it.joinToString("\n")) }
+        buildConfigField("boolean", "POTERX_LOCKED", (poterxSealed != null).toString())
+        buildConfigField("String", "POTERX_KEY", "\"${poterxSealed?.first ?: ""}\"")
+        buildConfigField("String", "POTERX_BLOB", "\"${poterxSealed?.second ?: ""}\"")
+        if (poterxAccount != null) logger.lifecycle("Poterx: building a LOCKED app for ${poterxAccount[1]} @ ${poterxAccount[0]}")
+        else logger.lifecycle("Poterx: no account configured, building an unlocked (stock OwnTV) app")
     }
 
     // ABI split via product flavors: real Android TV / Fire TV hardware is arm (arm64-v8a covers
@@ -445,4 +479,53 @@ dependencies {
     testImplementation(libs.org.json)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+
+// ---- Poterx helpers ---------------------------------------------------------------------------
+// Kept in the build script so the account never needs a committed file: the link is parsed here and
+// sealed with a fresh AES-GCM key per build. Both halves land in BuildConfig; the app's
+// tv.own.owntv.poterx.LockedSource reverses this at runtime.
+object PoterxLink {
+    /** server, username, password, "1"|"0" (prefer HLS) — or null when [raw] is not a panel link. */
+    fun parse(raw: String): List<String>? {
+        val m = Regex("""^(https?://[^/?#]+)(/[^?#]*)?(\?[^#]*)?""").find(raw.trim()) ?: return null
+        val base = m.groupValues[1]
+        val path = m.groupValues[2]
+        val query = m.groupValues[3].removePrefix("?").replace("&amp;", "&")
+        val params = query.split('&').filter { it.contains('=') }
+            .associate { it.substringBefore('=') to java.net.URLDecoder.decode(it.substringAfter('='), "UTF-8") }
+        params["username"]?.let { u ->
+            val p = params["password"] ?: return null
+            val out = params["output"]?.lowercase()
+            return listOf(base, u, p, if (out == "m3u8" || out == "hls") "1" else "0")
+        }
+        val segments = path.trim('/').split('/').filter { it.isNotEmpty() }
+        if (segments.isEmpty()) return null
+        val idx = if (segments[0] in setOf("playlist", "live", "movie", "series", "timeshift")) 1 else 0
+        if (segments.size < idx + 2) return null
+        val hls = segments.last().endsWith(".m3u8", ignoreCase = true) || segments.last().equals("m3u8", ignoreCase = true)
+        return listOf(base, segments[idx], segments[idx + 1], if (hls) "1" else "0")
+    }
+
+    fun normalizeServer(server: String): String {
+        val t = server.trim().trimEnd('/')
+        return if (t.startsWith("http://") || t.startsWith("https://")) t else "http://$t"
+    }
+
+    /** Base64 key to Base64 (iv + ciphertext), AES-256-GCM with a random key and nonce. */
+    fun seal(plain: String): Pair<String, String> {
+        val rnd = java.security.SecureRandom()
+        val key = ByteArray(32).also { rnd.nextBytes(it) }
+        val iv = ByteArray(12).also { rnd.nextBytes(it) }
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            javax.crypto.Cipher.ENCRYPT_MODE,
+            javax.crypto.spec.SecretKeySpec(key, "AES"),
+            javax.crypto.spec.GCMParameterSpec(128, iv),
+        )
+        val body = cipher.doFinal(plain.toByteArray(Charsets.UTF_8))
+        val enc = java.util.Base64.getEncoder()
+        return enc.encodeToString(key) to enc.encodeToString(iv + body)
+    }
 }

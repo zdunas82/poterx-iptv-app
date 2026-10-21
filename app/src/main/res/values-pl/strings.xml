@@ -3,4 +3,12 @@
     <string name="content_search_channels">Wyszukaj kanały…</string>
     <string name="content_search_movies">Wyszukaj filmy…</string>
     <string name="content_search_series">Wyszukaj seriale…</string>
+
+    <!-- Poterx: locked build -->
+    <string name="poterx_profile_default">Dom</string>
+    <string name="poterx_profile_added">Nowy profil</string>
+    <string name="poterx_connecting">Łączenie z Twoją telewizją…</string>
+    <string name="poterx_no_account">Ta wersja nie zawiera konta. Skontaktuj się z dostawcą.</string>
+    <string name="poterx_locked_title">Wbudowana lista kanałów</string>
+    <string name="poterx_locked_body">%1$s ma wbudowaną Twoją listę kanałów. Nie można jej tutaj podejrzeć, zmienić, wyeksportować ani skopiować na inne urządzenie. Jeśli kanały przestaną działać, skontaktuj się z dostawcą.</string>
 </resources>
