@@ -21,6 +21,11 @@ Data planu: 2026‑10‑21.
 | [Zapette](https://github.com/Bysimeit/Zapette) | PolyForm NC | Compose, Media3 + Jellyfin FFmpeg | Xtream, M3U | Passthrough audio (AC‑3/E‑AC‑3/DTS) |
 | [android/tv‑samples](https://github.com/android/tv-samples) | Apache‑2.0 | Compose for TV | — | `JetStreamCompose` (architektura), `TvMaterialCatalog` (komponenty) |
 
+Przykłady od użytkownika (Streambox/Nemosofts, OnePanel, Smarters‑backend) —
+analiza w [REFERENCE-APPS.md](REFERENCE-APPS.md). Najważniejsze wnioski: flaga
+`server_info.xui`, URL live z/bez `/live/`, retry 5×, catch‑up przez
+`streaming/timeshift.php`, konfigurowalny User‑Agent, FFmpeg dla AC‑3/DTS.
+
 Dokumentacja API: [xui‑one‑api‑docs (player API)](https://github.com/worldofiptvcom/xui-one-api-docs/blob/main/xtream-codes-player-api-documentation.md),
 [xtream‑codes‑api‑documentation](https://github.com/worldofiptvcom/xtream-codes-api-documentation),
 [Xtream‑Masters player_api](https://xtream-masters.com/api-doc/player_api.php).
@@ -144,7 +149,14 @@ catch‑up: {base}/timeshift/U/P/{duration_min}/{YYYY-MM-DD:HH-MM}/{stream_id}.t
 ```
 
 Uwagi:
+- `server_info.xui` (bool), `version`, `revision` → wykrycie panelu XUI.one
+  (Streambox buduje wtedy URL live **bez** `/live/`; na XUI.one działają obie
+  formy — my próbujemy `/live/`, a przy błędzie 404/403 bez prefiksu).
 - `user_info.allowed_output_formats` mówi, czy można `.m3u8` czy tylko `.ts`.
+- Catch‑up: Streambox używa `streaming/timeshift.php` z `start=YYYY-MM-DD:HH:mm:ss`
+  i `duration` w minutach (z `get_simple_data_table.has_archive`).
+- Panele XUI.one potrafią odpowiadać 301 na load‑balancer → w `HttpDataSource`
+  włączyć `setAllowCrossProtocolRedirects(true)`.
 - `server_info.timezone` + `timestamp_now` → korekta offsetu EPG.
 - `tv_archive=1` i `tv_archive_duration` (dni) → pokazujemy catch‑up w siatce.
 - `max_connections` / `active_cons` → ostrzeżenie zamiast błędu 403 przy zappingu.
@@ -173,7 +185,8 @@ Uwagi:
 - [ ] `PlaybackEngine` + `ExoPlayerEngine` (HLS/TS, bufor konfigurowalny)
 - [ ] Odtwarzacz pełnoekranowy, banner info (numer, nazwa, teraz/następnie) znikający po 5 s
 - [ ] Zapping: CH+/CH‑, góra/dół, wpisywanie numeru kanału z pilota, ostatni kanał (BACK)
-- [ ] Obsługa błędów: retry, przełączenie ts↔m3u8, komunikat "max connections"
+- [ ] Obsługa błędów: retry 5× z backoffem, przełączenie ts↔m3u8 i `/live/`↔bez,
+      komunikat "max connections"
 - [ ] Ulubione (długie OK) + grupa "Ulubione" na górze
 
 ### Faza 3 — EPG
@@ -200,7 +213,8 @@ Uwagi:
 - [ ] Ekran ustawień: silnik, bufor, format strumienia, User‑Agent, EPG offset, motyw
 
 ### Faza 7 — Odtwarzanie "trudnych" strumieni
-- [ ] `media3-ffmpeg-decoder` (AC‑3/E‑AC‑3/DTS w software) + passthrough
+- [ ] `media3-ffmpeg-decoder` (AC‑3/E‑AC‑3/DTS w software) + passthrough —
+      Streambox wozi własny `lib-decoder-ffmpeg.aar` z tego samego powodu
 - [ ] Opcjonalnie `MpvEngine` (libmpv) jako drugi silnik z automatycznym fallbackiem
 
 ### Faza 8 — Dopieszczanie
