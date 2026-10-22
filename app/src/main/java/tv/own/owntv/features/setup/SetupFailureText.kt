@@ -7,4 +7,4 @@ import tv.own.owntv.core.setup.displayText
 
 /** Words a semantic onboarding failure at the Compose boundary; the sentences are core's. */
 @Composable
-fun SourceImporter.SetupFailure.displayText(): String = displayText(LocalContext.current.resources)
+fun SourceImporter.SetupFailure.displayText(): String = tv.own.owntv.poterx.PoterxPrivacy.hide(displayText(LocalContext.current.resources))

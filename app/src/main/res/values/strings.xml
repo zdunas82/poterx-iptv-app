@@ -46,6 +46,10 @@
     <string name="poterx_contact_title">Your provider</string>
     <string name="poterx_contact_line">Contact: %1$s</string>
     <string name="poterx_about_legal">Contains code from the OwnTV project (GPLv3). Source code: %1$s</string>
+    <string name="poterx_guide_feed">Programme guide</string>
+    <string name="poterx_guide_empty">The guide will be set up as soon as you sign in.</string>
+    <string name="poterx_guide_refresh_description">How often the programme guide is downloaded again</string>
+    <string name="poterx_guide_body">The programme guide comes with your subscription and is set up by the app. If a channel shows no programmes, refresh the guide or contact your provider.</string>
     <string name="poterx_locked_title">Built-in playlist</string>
     <string name="poterx_locked_body">%1$s comes with your playlist built in. It cannot be viewed, changed, exported or copied to another device from here. If your channels stop working, contact your provider.</string>
 </resources>

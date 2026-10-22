@@ -839,7 +839,7 @@ fun PlayerHud(
                         Spacer(Modifier.height(4.dp))
                         Text(it.displayText(), style = tv.own.owntv.ui.theme.stageText(22, 700), color = Color.White.copy(alpha = 0.55f), textAlign = TextAlign.Center)
                     }
-                    info.raw?.takeIf { it.isNotBlank() }?.let {
+                    info.raw?.takeIf { it.isNotBlank() }?.let { tv.own.owntv.poterx.PoterxPrivacy.hide(it) }?.let {
                         Spacer(Modifier.height(4.dp))
                         Text(stringResource(R.string.player_raw_error, it), style = tv.own.owntv.ui.theme.stageText(22, 400), color = Color.White.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(0.8f))
                     }

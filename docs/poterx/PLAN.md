@@ -33,6 +33,10 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   aktualizacji, metadanych i napisów bez nazwy projektu. Własny klucz TMDB (`POTERX_TMDB_KEY`)
   wbudowany w aplikację, bo wspólna usługa OwnTV odpowiada 403. Konto: statusy po polsku, pola
   tylko do odczytu bez strzałek. Wyszukiwanie: kanał o nazwie równej zapytaniu na górze.
+- **v0.2.2** (w toku): adres panelu nigdzie na ekranie: filtr `PoterxPrivacy` maskuje host w
+  informacjach o strumieniu (wiersz „źródło” usunięty), w błędach odtwarzacza, synchronizacji i
+  logowania, w dzienniku błędów i jego eksporcie; zakładka EPG w wersji zamkniętej to tylko
+  odświeżanie przewodnika, bez adresu i edycji.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.

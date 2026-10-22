@@ -555,7 +555,7 @@ internal fun ErrorLogPage(setEntry: (() -> Boolean) -> Unit, onCountChanged: () 
             // Export also carries the live diagnostics ring, so it stays even when the list is empty.
             StageTool(stringResource(R.string.settings_export), boxed = true, icon = OwnTVIcon.DOWNLOADS, modifier = Modifier.focusRequester(exportFocus), onClick = {
                 scope.launch {
-                    val path = withContext(Dispatchers.IO) { PlaybackErrorLog.export(context) }
+                    val path = withContext(Dispatchers.IO) { PlaybackErrorLog.export(context).also { tv.own.owntv.poterx.PoterxPrivacy.scrubFile(it) } }
                     exportPath = path
                     exportFailed = path == null
                 }
@@ -608,7 +608,7 @@ internal fun ErrorLogPage(setEntry: (() -> Boolean) -> Unit, onCountChanged: () 
                         trailing = { Text(formatBestDateTime(context, "dMMM", e.atMs), style = stageText(17, 500), color = StageColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         extra = { focused ->
                             if (focused) {
-                                e.raw?.let { Text(it, style = stageText(15, 500), color = StageColors.Dim, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.mpx)) }
+                                e.raw?.let { tv.own.owntv.poterx.PoterxPrivacy.hide(it) }?.let { Text(it, style = stageText(15, 500), color = StageColors.Dim, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.mpx)) }
                                 Text(stringResource(R.string.settings_device_details, e.model, e.android), style = stageText(15, 500), color = StageColors.Dim, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.mpx))
                             }
                         },

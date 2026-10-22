@@ -7,4 +7,4 @@ import tv.own.owntv.core.util.FriendlySyncFailure
 
 /** Resolve a classified sync failure only at the Compose presentation boundary; the sentences are core's. */
 @Composable
-fun FriendlySyncFailure.displayText(): String = displayText(LocalContext.current.resources)
+fun FriendlySyncFailure.displayText(): String = tv.own.owntv.poterx.PoterxPrivacy.hide(displayText(LocalContext.current.resources))

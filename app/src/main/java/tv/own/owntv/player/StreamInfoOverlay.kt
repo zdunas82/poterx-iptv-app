@@ -41,7 +41,10 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
     // Re-read on the player's shared cosmetic beat rather than a timer of its own, so having the overlay
     // up alongside the position readout costs one wake-up rather than two (see [PlayerHeartbeat]).
     LaunchedEffect(player) {
-        PlayerHeartbeat.beat.collect { rows = player.streamInfo() }
+        PlayerHeartbeat.beat.collect {
+            // Poterx: the stream's address (the provider's panel) is not shown on a locked build.
+            rows = player.streamInfo().let { all -> if (tv.own.owntv.poterx.LockedSource.enabled) all.filterNot { it.value is tv.own.owntv.player.StreamInfoValue.Source } else all }
+        }
     }
     if (rows.isEmpty()) return
     val res = LocalResources.current
@@ -71,7 +74,7 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    row.value.displayText(res),
+                    tv.own.owntv.poterx.PoterxPrivacy.hide(row.value.displayText(res)),
                     style = tv.own.owntv.ui.theme.stageText(22, 400),
                     color = hudInk,
                     fontFamily = FontFamily.Monospace,

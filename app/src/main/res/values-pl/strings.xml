@@ -45,6 +45,10 @@
     <string name="poterx_contact_title">Twój dostawca</string>
     <string name="poterx_contact_line">Kontakt: %1$s</string>
     <string name="poterx_about_legal">Zawiera kod projektu OwnTV (GPLv3). Kod źródłowy: %1$s</string>
+    <string name="poterx_guide_feed">Przewodnik programowy</string>
+    <string name="poterx_guide_empty">Przewodnik skonfiguruje się zaraz po zalogowaniu.</string>
+    <string name="poterx_guide_refresh_description">Jak często przewodnik programowy jest pobierany ponownie</string>
+    <string name="poterx_guide_body">Przewodnik programowy jest częścią Twojego abonamentu i konfiguruje go aplikacja. Jeśli jakiś kanał nie ma programu, odśwież przewodnik albo skontaktuj się z dostawcą.</string>
     <string name="poterx_locked_title">Wbudowana lista kanałów</string>
     <string name="poterx_locked_body">%1$s ma wbudowaną Twoją listę kanałów. Nie można jej tutaj podejrzeć, zmienić, wyeksportować ani skopiować na inne urządzenie. Jeśli kanały przestaną działać, skontaktuj się z dostawcą.</string>
 </resources>

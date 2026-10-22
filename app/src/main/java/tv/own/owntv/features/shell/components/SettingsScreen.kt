@@ -410,7 +410,8 @@ fun SettingsScreen(
         SettingsTab.SOURCES -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedSourcesScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) else ManageSourcesScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
         // Poterx: the signed-in account (status, expiry, connections) and signing out; locked builds only.
         SettingsTab.ACCOUNT -> { tv.own.owntv.poterx.LockedAccountScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
-        SettingsTab.EPG -> { tv.own.owntv.features.settings.EpgSourcesScreen(onBack = { tab = SettingsTab.ROOT; consumeEpgAdd = false }, modifier = modifier, startOnAdd = consumeEpgAdd) }
+        // Poterx: a locked build's guide page has refresh controls only (no feed address, no editing).
+        SettingsTab.EPG -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedGuideScreen(onBack = { tab = SettingsTab.ROOT; consumeEpgAdd = false }, modifier = modifier) else tv.own.owntv.features.settings.EpgSourcesScreen(onBack = { tab = SettingsTab.ROOT; consumeEpgAdd = false }, modifier = modifier, startOnAdd = consumeEpgAdd) }
         SettingsTab.BACKUP -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedInfoScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) else BackupScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) }
         SettingsTab.LOCAL_SYNC -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedInfoScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) else LocalSyncScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) }
         SettingsTab.CUSTOMIZE -> { CustomizeScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
