@@ -77,4 +77,6 @@
     <string name="settings_language_contribution_qr_description">QR code for the translation project overview</string>
     <string name="settings_catchup_player">Play catch-up in</string>
     <string name="content_live_next">Next</string>
+    <!-- Poterx: the core keywords name GitHub; a locked build does not. -->
+    <string name="settings_search_keywords_updates">update new version release check</string>
 </resources>

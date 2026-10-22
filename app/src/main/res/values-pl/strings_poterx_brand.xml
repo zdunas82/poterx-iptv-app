@@ -77,4 +77,6 @@
     <string name="settings_language_contribution_qr_description">Kod QR do przeglądu projektu tłumaczeń</string>
     <string name="settings_catchup_player">Odtwarzaj archiwum w</string>
     <string name="content_live_next">Później</string>
+    <!-- Poterx: the core keywords name GitHub; a locked build does not. -->
+    <string name="settings_search_keywords_updates">aktualizacja nowa wersja sprawdź</string>
 </resources>

@@ -80,9 +80,34 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
       i na ekranie Konto (v0.2.0).
 - [ ] Testy jednostkowe `PoterxLink` i `LockedSource` w CI.
 
+## Procedura wydania (od testów u klientów, 2026‑10‑23)
+1. Nowy commit przechodzi CI (Android CI, gałąź `claude/android-tv-m3u-app-41s6di`).
+2. Wydanie na GitHubie z tagiem `vX.Y.Z` **z zaznaczonym „Set as a pre-release”**. Aplikacja
+   pyta o `releases/latest`, a GitHub nie liczy tam pre-release — klienci nic nie widzą.
+3. Instalacja APK z pre-release na własnym Shieldzie/Streamerze, test według listy niżej.
+4. Po testach: edycja wydania, odznaczenie „pre-release” (ewentualnie „Set as the latest
+   release”). Od tej chwili klienci dostają kartę „Nowa wersja” przy starcie.
+5. Wpadka po publikacji: ponowne zaznaczenie „pre-release” cofa ofertę aktualizacji dla
+   klientów, którzy jeszcze jej nie pobrali.
+
+Lista testów przed publikacją: start zimny (logowanie bez pytania o dane), lista kanałów + EPG,
+zapping ▲▼ i podwójny Back, przewodnik (długie OK), archiwum, film → strona szczegółów → Play,
+serial, Ustawienia › Konto (status, ważność), O aplikacji (brak adresów), aktualizacja z
+poprzedniej wersji bez utraty danych.
+
 ## v0.3 — obsługa klientów na odległość
+- [ ] **Własny serwer aktualizacji** zamiast GitHub Releases (po stronie aplikacji ok. 1 dzień):
+      - plik `https://<domena>/poterx/update.json` z polami `versionCode`, `versionName`,
+        `apkUrl`, `sha256`, `notes` (PL), `minVersionCode` (wymuszona aktualizacja),
+        `channel` (`test`/`stable` — kanał testowy dla własnych urządzeń);
+      - APK obok (`poterx-tv-X.Y.Z.apk`), publikowane przez CI (`scp`/`rsync` po tagu);
+      - w aplikacji `PoterxUpdater` (zastępuje `UpdateManager` z core w wersji zamkniętej):
+        sprawdzenie przy starcie, pobranie, instalacja przez `PackageInstaller`, suma SHA‑256,
+        `User-Agent: PoterxTV/<wersja>`; adres z `POTERX_UPDATE_URL` (sekret, nigdy na ekranie);
+      - serwer: VPS z HTTPS (Caddy daje certyfikat sam) albo hosting statyczny (Cloudflare R2,
+        Bunny); osobna domena od panelu, żeby aplikacja nie zdradzała adresu panelu w ruchu.
 - [ ] Plik JSON na serwerze dostawcy: ogłoszenia, minimalna wersja (wymuszona aktualizacja),
-      zapasowy adres serwera.
+      zapasowy adres serwera (ten sam `update.json`).
 - [ ] Wysyłka raportu błędu jednym przyciskiem.
 
 ## v0.4 — tryb „Poterx klasyczny” (TiviMate)

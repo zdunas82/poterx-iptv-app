@@ -28,9 +28,16 @@ object PoterxPrivacy {
     /** TMDB's query key, which core's own URL masking does not cover. */
     private val apiKey = Regex("(?i)(api_key=)[^&\\s]*")
 
+    /** The release repository the updater reads (host and path), so a log line never names it. */
+    private val releaseRepo: Regex? by lazy {
+        val repo = tv.own.owntv.core.CoreBuildInfo.releaseRepo.takeIf { LockedSource.enabled && it.isNotBlank() } ?: return@lazy null
+        Regex("(?i)(?:[a-z][a-z0-9+.-]*://)?(?:api\\.)?github\\.com/(?:repos/)?" + Regex.escape(repo) + "[^\\s\"']*")
+    }
+
     /** [text] with every mention of the built-in server replaced by a mask, and any TMDB key hidden. */
     fun hide(text: String): String {
         var out = text.replace(apiKey, "$1***")
+        releaseRepo?.let { out = out.replace(it, MASK) }
         for (p in patterns) out = out.replace(p, MASK)
         return out
     }
