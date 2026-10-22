@@ -883,9 +883,38 @@ fun OwnTVShell(
         if (openedSeries == null && searchReturn == MainSection.SERIES && selectedSection == MainSection.SERIES) returnToSearch()
     }
 
+    // Poterx: Back pressed twice (within POTERX_BACK_TWICE_MS) on a live channel with the controls
+    // hidden returns to the channel watched before — the "last channel" key that streamer remotes
+    // lack. A single press still leaves the player, after the short wait that tells the two apart;
+    // without a previous channel it leaves at once. Only the shell sees Back here: the HUD's own
+    // handlers (controls up, digits pending) and the channel guide are composed deeper and win.
+    var lastBackAt by remember { mutableStateOf(0L) }
+    var pendingExit by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     BackHandler {
         when {
-            playerMode == PlayerMode.FULLSCREEN -> exitPlayer()
+            playerMode == PlayerMode.FULLSCREEN -> {
+                val canToggle = tv.own.owntv.poterx.LockedSource.enabled && zapSource == MainSection.LIVE_TV && previousLiveChannel != null
+                val now = android.os.SystemClock.uptimeMillis()
+                when {
+                    !canToggle -> exitPlayer()
+                    now - lastBackAt <= tv.own.owntv.poterx.POTERX_BACK_TWICE_MS -> {
+                        pendingExit?.cancel()
+                        pendingExit = null
+                        lastBackAt = 0L
+                        liveVm.previousChannel()
+                    }
+                    else -> {
+                        lastBackAt = now
+                        pendingExit?.cancel()
+                        pendingExit = scope.launch {
+                            kotlinx.coroutines.delay(tv.own.owntv.poterx.POTERX_BACK_TWICE_MS)
+                            pendingExit = null
+                            lastBackAt = 0L
+                            if (playerMode == PlayerMode.FULLSCREEN) exitPlayer()
+                        }
+                    }
+                }
+            }
             showAvatarPicker -> showAvatarPicker = false
             showPlaylistPicker -> showPlaylistPicker = false
             showExit -> showExit = false
@@ -2010,6 +2039,8 @@ fun OwnTVShell(
             )
     }
 
+        // Poterx: the subscription-ends-soon card, kept back while a channel or film is fullscreen.
+        tv.own.owntv.poterx.PoterxExpiryNotice(canShow = playerMode == PlayerMode.NONE && !showExit)
         val updateManager = koinInject<UpdateManager>()
         var showStartupToast by remember { mutableStateOf(false) }
         var showChangelog by remember { mutableStateOf(false) }

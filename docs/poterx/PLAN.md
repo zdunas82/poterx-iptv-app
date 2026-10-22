@@ -58,6 +58,10 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   oglądany); ◀ na wierszu przewodnika cofa w czasie zamiast wychodzić do menu; karta w odtwarzaczu
   mieści się w prawej połowie („16:25 – 17:05 · pozostało 25 min”, etykieta „Później”, chipy bez
   łamania); strona filmu nie przesuwa się przy fokusie na przyciskach.
+- **v0.2.5** (w toku): poprzedni kanał — Back dwa razy (do 0,4 s) na kanale na żywo wraca do
+  kanału oglądanego wcześniej (pojedynczy Back nadal wychodzi z odtwarzacza); klawisz „ostatni
+  kanał” na pilotach, które go mają, robi to samo. Karta „Subskrypcja wygasa za N dni” raz
+  dziennie przy starcie (7 dni przed datą z panelu i po niej) z datą, kontaktem i kodem QR Telegrama.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.

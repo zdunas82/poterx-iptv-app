@@ -50,6 +50,14 @@
     <string name="poterx_guide_refresh_description">How often the programme guide is downloaded again</string>
     <string name="poterx_guide_body">The programme guide comes with your subscription and is set up by the app. If a channel shows no programmes, refresh the guide or contact your provider.</string>
     <string name="poterx_key_open">Open</string>
+    <plurals name="poterx_expiry_days_title">
+        <item quantity="one">Subscription ends in %d day</item>
+        <item quantity="other">Subscription ends in %d days</item>
+    </plurals>
+    <string name="poterx_expiry_expired_title">Subscription has ended</string>
+    <string name="poterx_expiry_body">Valid until %1$s. To keep watching, renew it with your provider before that day.</string>
+    <string name="poterx_expiry_expired_body">Access ended on %1$s. Renew it with your provider to watch again.</string>
+    <string name="poterx_expiry_renew">Renew on Telegram</string>
     <string name="poterx_locked_title">Built-in playlist</string>
     <string name="poterx_locked_body">%1$s comes with your playlist built in. It cannot be viewed, changed, exported or copied to another device from here. If your channels stop working, contact your provider.</string>
 </resources>

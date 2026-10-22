@@ -530,6 +530,12 @@ fun PlayerHud(
                 }
                 return@onPreviewKeyEvent true
             }
+            // Poterx: the remote's "last channel" key (where there is one) toggles with the channel
+            // watched before, like Back pressed twice in the shell.
+            if (tv.own.owntv.poterx.LockedSource.enabled && onPreviousChannel != null && isLive && e.key == Key.LastChannel) {
+                if (e.type == KeyEventType.KeyDown && e.nativeKeyEvent.repeatCount == 0) onPreviousChannel()
+                return@onPreviewKeyEvent true
+            }
             // Configured player shortcuts run inside this original, stable preview handler. Direct
             // tune above has first priority, so number keys keep changing live channels fullscreen.
             if (remoteShortcuts.enabled && !inert && dialog == HudDialog.NONE && !digitsActive) {
