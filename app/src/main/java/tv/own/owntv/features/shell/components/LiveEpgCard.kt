@@ -66,7 +66,12 @@ fun LiveEpgCard(
     val nowMs = if (archive) (atMs ?: wallNow) else wallNow
 
     Row(
-        modifier = if (!archive) modifier else modifier
+        modifier = if (!archive) {
+            // Poterx: a shade behind the live card too, so it reads over a bright picture.
+            if (tv.own.owntv.poterx.LockedSource.enabled) {
+                modifier.clip(RoundedCornerShape(8.dp)).background(tv.own.owntv.ui.theme.hudShade(0.45f)).padding(horizontal = 10.dp, vertical = 6.dp)
+            } else modifier
+        } else modifier
             .clip(RoundedCornerShape(8.dp))
             .background(tv.own.owntv.ui.theme.stageAccent.accent.copy(alpha = 0.09f))
             .border(1.dp, tv.own.owntv.ui.theme.stageAccent.accent.copy(alpha = 0.45f), RoundedCornerShape(8.dp))

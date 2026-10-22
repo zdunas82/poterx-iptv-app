@@ -1471,7 +1471,11 @@ fun OwnTVShell(
       // Unobtrusive background-sync pill (bottom middle): visible while any catalog sync runs —
       // backgrounded first import, remainder worker, auto refresh — but never over fullscreen video.
       if (playerMode != PlayerMode.FULLSCREEN) {
-          tv.own.owntv.features.shell.components.SyncStatusPill(modifier = Modifier.align(Alignment.BottomCenter))
+          // Poterx: lifted clear of the key hints along the bottom edge of the screens.
+          tv.own.owntv.features.shell.components.SyncStatusPill(
+              modifier = Modifier.align(Alignment.BottomCenter)
+                  .padding(bottom = if (tv.own.owntv.poterx.LockedSource.enabled) 84.mpx else 0.mpx),
+          )
       }
 
       // Player surface — hoisted so it persists across fullscreen <-> mini (same call site = the
@@ -1715,6 +1719,7 @@ fun OwnTVShell(
                     liveLeftRightRewinds = liveLeftRightRewinds,
                     timeshiftOffsetSec = if (isTunedLive) { { timeshiftOffsetState.value } } else null,
                     onTuneToNumber = if (directTuneEnabled && isTunedLive && isLiveStream && !timeshifted && previewChannel != null) liveVm::tuneByNumber else null,
+                    onPeekNumber = if (tv.own.owntv.poterx.LockedSource.enabled && directTuneEnabled && isTunedLive && isLiveStream && !timeshifted && previewChannel != null) liveVm::peekChannelName else null,
                     directTuneContextKey = previewChannel?.id ?: 0L,
                     // Show the ACTUAL running engine (mpv when pinned OR auto-fallen-back), not just the pin —
                     // otherwise an auto-fallback to mpv still read "EXO". true = on mpv (pill shows MPV, teal).

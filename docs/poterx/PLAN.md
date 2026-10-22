@@ -62,6 +62,11 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   kanału oglądanego wcześniej (pojedynczy Back nadal wychodzi z odtwarzacza); klawisz „ostatni
   kanał” na pilotach, które go mają, robi to samo. Karta „Subskrypcja wygasa za N dni” raz
   dziennie przy starcie (7 dni przed datą z panelu i po niej) z datą, kontaktem i kodem QR Telegrama.
+- **v0.2.6** (w toku, po audycie v0.2.5): „Teraz popularne” nie podstawia filmu z playlisty o tym
+  samym tytule, ale innym roku; baner kanału także po powrocie do poprzedniego kanału i po wyborze
+  z listy; baner z „od – do · pozostało”; karta „na żywo” w odtwarzaczu z tłem (czytelna na jasnym
+  obrazie), chipy nie są ucinane w środku wartości, panel informacji szerszy; dymek synchronizacji
+  nad podpowiedziami; przy wpisywaniu numeru widać nazwę kanału.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.

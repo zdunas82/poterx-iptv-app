@@ -384,11 +384,29 @@ class HomeViewModel(
      * stays here is what only a television does with it: the caches keyed to the previous pass, and the
      * hero carousel's position.
      */
+    /**
+     * Poterx: core matches a trending title to the playlist by title alone when either side has no
+     * year, so "Plan doskonały (2006)" stood in for a 2026 film of the same Polish title. The entry's
+     * own year (parsed, or read from its name) has the last word: a movie must match, a series may
+     * differ by one.
+     */
+    private fun TrendingHomeItem.yearPlausible(): Boolean {
+        val tmdbYear = snapshot.year ?: return true
+        val (parsed, name) = when (this) {
+            is TrendingHomeItem.Movie -> movie.parsedYear to movie.name
+            is TrendingHomeItem.Series -> series.parsedYear to series.name
+        }
+        val year = parsed ?: YEAR_IN_NAME.find(name)?.value?.toIntOrNull() ?: return true
+        val tolerance = if (this is TrendingHomeItem.Series) 1 else 0
+        return kotlin.math.abs(year - tmdbYear) <= tolerance
+    }
+
     private suspend fun loadHomeData(profileId: Long) {
         val previous = _uiState.value
         val data = feed.load(profileId)
         _uiState.value = HomeUiState(
-            trendingItems = data.trendingItems,
+            // Poterx: a title matched by name alone is dropped when the playlist entry's year disagrees.
+            trendingItems = data.trendingItems.filter { it.yearPlausible() },
             activeTrendingIndex = previous.activeTrendingIndex
                 .coerceIn(0, (data.trendingItems.size - 1).coerceAtLeast(0)),
             trendingPreferredLanguage = data.trendingPreferredLanguage,
@@ -477,3 +495,6 @@ class HomeViewModel(
     }
 
 }
+
+/** A four-digit year inside a provider title, e.g. "Plan doskonały (2006)". */
+private val YEAR_IN_NAME = Regex("""(?<!\d)(?:19|20)\d{2}(?!\d)""")

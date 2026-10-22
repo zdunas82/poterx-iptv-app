@@ -102,6 +102,7 @@
 2	technical	app/src/main/java/tv/own/owntv/features/home/HomeScreen.kt	·
 2	technical	app/src/main/java/tv/own/owntv/features/home/HomeScreen.kt	•
 1	technical	app/src/main/java/tv/own/owntv/features/home/HomeScreen.kt	★
+1	regex	app/src/main/java/tv/own/owntv/features/home/HomeViewModel.kt	(?<!\\d)(?:19|20)\\d{2}(?!\\d)
 1	locale	app/src/main/java/tv/own/owntv/features/home/HomeViewModel.kt	EN
 1	performance	app/src/main/java/tv/own/owntv/features/home/HomeViewModel.kt	home-data
 3	technical	app/src/main/java/tv/own/owntv/features/home/HomeViewModel.kt	w1280

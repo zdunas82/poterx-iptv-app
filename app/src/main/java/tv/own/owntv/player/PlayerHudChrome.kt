@@ -102,7 +102,8 @@ internal fun TopBar(
         }
         Column(Modifier.weight(1f)) {
             val chipRow: @Composable () -> Unit = {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Poterx: a chip that does not fit is dropped whole rather than cut mid-value ("3.3 …").
+                ChipFitRow {
                     val durMin = (duration / 60000)
                     val parts = buildList {
                         meta.year?.takeIf { it.isNotBlank() }?.let { add(it) }
@@ -110,8 +111,11 @@ internal fun TopBar(
                         addAll(chips) // aspect · resolution · fps · audio
                     }
                     parts.forEachIndexed { i, label ->
-                        if (i > 0) Box(Modifier.size(3.dp).clip(CircleShape).background(hudInk.copy(alpha = 0.3f)))
-                        Text(label, style = tv.own.owntv.ui.theme.stageText(22, 700), color = hudInk.copy(alpha = 0.5f), maxLines = 1, softWrap = false, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (i > 0) Box(Modifier.size(3.dp).clip(CircleShape).background(hudInk.copy(alpha = 0.3f)))
+                            // Measured unbounded by the row, so the ellipsis is never reached; the row drops the chip instead.
+                            Text(label, style = tv.own.owntv.ui.theme.stageText(22, 700), color = hudInk.copy(alpha = 0.5f), maxLines = 1, softWrap = false, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        }
                     }
                     // The LIVE badge has left the top bar: live status belongs beside the timeline that
                     // describes it, so it is now the stateful badge at the right end of the dock's band A.
@@ -226,7 +230,7 @@ internal fun ChannelCard(player: PlaybackEngine, modifier: Modifier = Modifier, 
  *  accepting digits" and the bar along the bottom drains over the auto-submit window, so the wait is
  *  visible instead of mysterious. [error] turns it into the failure readout for the same number. */
 @Composable
-internal fun ChannelNumberCard(digits: String, error: String? = null, modifier: Modifier = Modifier) {
+internal fun ChannelNumberCard(digits: String, error: String? = null, name: String? = null, modifier: Modifier = Modifier) {
     // Animations Off: a steady caret, with no infinite transition started (never a 0 ms one).
     val caretAlpha = if (!animationsOn) 1f else {
         val caret = rememberInfiniteTransition(label = "tuneCaret")
@@ -279,6 +283,41 @@ internal fun ChannelNumberCard(digits: String, error: String? = null, modifier: 
             }
             error?.let {
                 Text(it, style = tv.own.owntv.ui.theme.stageText(22, 700), color = Color(0xFFFF8A80), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            // Poterx: the channel the digits so far name, so the viewer sees it before the switch.
+            if (error == null) name?.let {
+                Text(it, style = tv.own.owntv.ui.theme.stageText(22, 600), color = hudInk.copy(alpha = 0.85f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+/**
+ * Poterx: a row that lays its children out left to right at their natural width and drops, whole,
+ * every child from the first one that does not fit. The chips keep their values readable that way.
+ */
+@Composable
+private fun ChipFitRow(modifier: Modifier = Modifier, spacing: androidx.compose.ui.unit.Dp = 8.dp, content: @Composable () -> Unit) {
+    androidx.compose.ui.layout.Layout(content, modifier) { measurables, constraints ->
+        val loose = constraints.copy(minWidth = 0, maxWidth = androidx.compose.ui.unit.Constraints.Infinity, minHeight = 0)
+        val gap = spacing.roundToPx()
+        val placed = mutableListOf<androidx.compose.ui.layout.Placeable>()
+        var used = 0
+        for (measurable in measurables) {
+            val placeable = measurable.measure(loose)
+            val next = if (placed.isEmpty()) placeable.width else used + gap + placeable.width
+            if (next > constraints.maxWidth && placed.isNotEmpty()) break
+            used = next
+            placed += placeable
+        }
+        val height = placed.maxOfOrNull { it.height } ?: 0
+        val width = used.coerceAtMost(constraints.maxWidth).coerceAtLeast(constraints.minWidth)
+        layout(width, height.coerceIn(constraints.minHeight, constraints.maxHeight)) {
+            var x = 0
+            placed.forEachIndexed { i, placeable ->
+                if (i > 0) x += gap
+                placeable.placeRelative(x, (height - placeable.height) / 2)
+                x += placeable.width
             }
         }
     }

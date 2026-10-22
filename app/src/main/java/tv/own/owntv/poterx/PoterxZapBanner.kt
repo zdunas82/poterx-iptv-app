@@ -98,8 +98,10 @@ fun PoterxZapBanner(
                     }
                     val remaining = ((now.stopMs - nowMs) / 60_000L).toInt()
                     Text(
-                        if (remaining in 1..600) stringResource(R.string.content_live_time_remaining, formatTime(now.stopMs), remaining)
-                        else stringResource(R.string.content_live_time_range, formatTime(now.startMs), formatTime(now.stopMs)),
+                        // "21:20 – 22:05 · 16 min left": the slot first, as on the top card.
+                        stringResource(R.string.content_live_time_range, formatTime(now.startMs), formatTime(now.stopMs)).let { range ->
+                            if (remaining in 1..600) stringResource(R.string.content_live_time_remaining, range, remaining) else range
+                        },
                         style = stageText(20, 500), color = hudInk.copy(alpha = 0.6f), maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                     val span = (now.stopMs - now.startMs).toFloat()

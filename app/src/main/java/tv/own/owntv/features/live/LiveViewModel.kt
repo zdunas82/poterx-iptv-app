@@ -1617,6 +1617,18 @@ class LiveViewModel(
         }
     }
 
+    /** Poterx: the name a typed number resolves to, for the entry card; null when nothing has it. The
+     *  playing channel's playlist wins, as in [tuneByNumber]. */
+    suspend fun peekChannelName(number: Int): String? = withContext(Dispatchers.IO) {
+        val sourceIds = ctx.value.sourceIds
+        if (sourceIds.isEmpty()) return@withContext null
+        val currentSourceId = _previewChannel.value?.sourceId
+        val found = channelDao.findByNumber(sourceIds, number)
+            .let { list -> list.firstOrNull { it.sourceId == currentSourceId } ?: list.firstOrNull() }
+            ?: return@withContext null
+        custom.value.itemNames[CustomizeKeys.channel(found)] ?: found.name
+    }
+
     /** Open a channel from a caller-owned rail (for example Home favorites), preserving that rail as the
      *  playback browse/zap context instead of replacing it with provider-category metadata. */
     suspend fun ensurePlayingByIdAsync(channelId: Long, zapChannels: List<ChannelEntity> = emptyList()): Boolean {

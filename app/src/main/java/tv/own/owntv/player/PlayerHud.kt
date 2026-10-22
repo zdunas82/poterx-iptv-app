@@ -184,6 +184,8 @@ fun PlayerHud(
     timeshiftOffsetSec: (() -> Int?)? = null,
     // Direct tune: enter a provider channel number to switch channels. Null = disabled (not live / no channel).
     onTuneToNumber: (suspend (Int) -> DirectTuneResult)? = null,
+    // Poterx: the name a typed number would tune to, shown on the entry card while the digits wait.
+    onPeekNumber: (suspend (Int) -> String?)? = null,
     // Channel identity key for direct tune: changing this cancels any in-flight submission.
     directTuneContextKey: Long = 0L,
     // Live "compatibility mode": pin this channel to the mpv engine (fixes UHD artifacts / undecodable
@@ -308,6 +310,13 @@ fun PlayerHud(
     var okHeld by remember { mutableStateOf(false) }
     var okLongFired by remember { mutableStateOf(false) }
     LaunchedEffect(channelFlash) { if (channelFlash > 0) { showFlash = true; delay(if (zapBanner != null) 5000 else 3000); showFlash = false } }
+    // Poterx: the bottom banner for every channel change the HUD did not make itself — the previous
+    // channel (Back twice, the last-channel key) and a pick from the channel list.
+    var flashedContext by remember { mutableStateOf(directTuneContextKey) }
+    LaunchedEffect(directTuneContextKey) {
+        if (zapBanner != null && isLive && directTuneContextKey != flashedContext) channelFlash++
+        flashedContext = directTuneContextKey
+    }
 
     // Engine-switch confirmation toast: a brief "Switched to MPV/ExoPlayer" at the bottom-center when the
     // user flips the engine via the HUD toggle. Mirrors the channel-flash pattern above.
@@ -335,6 +344,12 @@ fun PlayerHud(
 
     // ---- Direct tune (channel-number entry) ----
     var digitBuffer by remember { mutableStateOf("") }
+    // Poterx: the channel the pending digits name, looked up on every keystroke.
+    var peekName by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(digitBuffer) {
+        peekName = null
+        if (onPeekNumber != null && digitBuffer.isNotEmpty()) peekName = digitBuffer.toIntOrNull()?.let { onPeekNumber(it) }
+    }
     var submissionRequest by remember { mutableStateOf<Int?>(null) }
     var submissionTick by remember { mutableIntStateOf(0) }
 
@@ -678,7 +693,7 @@ fun PlayerHud(
                 }
             }
             when (val osd = tuneOsd) {
-                is TuneOsd.Entry -> ChannelNumberCard(osd.digits)
+                is TuneOsd.Entry -> ChannelNumberCard(osd.digits, name = peekName)
                 is TuneOsd.Message -> ChannelNumberCard(osd.digits, error = osd.text)
                 is TuneOsd.Tuned, null -> Unit
             }
