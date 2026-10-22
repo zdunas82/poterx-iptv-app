@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.nativeKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
@@ -86,6 +87,10 @@ fun PoterxChannelGuide(
             .takeIf { it >= 0 } ?: programmes.indexOfFirst { it.startMs > nowMs }.coerceAtLeast(0)
     }
     var selected by remember(programmes) { mutableIntStateOf(nowIndex) }
+    // The guide opens while OK is still held (a long press), so the remote keeps sending repeats of
+    // that same press, and its release lands here too. None of it may count: only a press that began
+    // after the guide opened acts (the key event's down time is on the same uptime clock).
+    val openedAt = remember { android.os.SystemClock.uptimeMillis() }
     val listState = rememberLazyListState()
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
@@ -109,6 +114,9 @@ fun PoterxChannelGuide(
                     Key.DirectionRight -> { if (selected < programmes.lastIndex) selected++; true }
                     Key.DirectionUp, Key.DirectionDown -> { onDismiss(); false }
                     Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> {
+                        // The opening press (still held) and its repeats are swallowed.
+                        val native = e.nativeKeyEvent
+                        if (native.repeatCount > 0 || native.downTime < openedAt) return@onPreviewKeyEvent true
                         val p = programmes.getOrNull(selected)
                         when {
                             p == null -> onDismiss()
