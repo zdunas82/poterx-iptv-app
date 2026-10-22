@@ -22,6 +22,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -88,6 +90,9 @@ fun ChannelListOverlay(
     /** History only: channel id → when it was last watched, shown at the row's end. */
     watchedAt: Map<Long, Long>? = null,
     onOpenCategories: (() -> Unit)? = null,
+    /** Poterx: the rows on screen (plus a margin either side) whenever scrolling changes them, so the
+     *  caller can resolve their programmes ahead of the rest of the list. */
+    onVisibleRows: ((List<ChannelEntity>) -> Unit)? = null,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val dismissDirection = if (alignEnd) HorizontalDirection.END else HorizontalDirection.START
@@ -100,6 +105,20 @@ fun ChannelListOverlay(
         }
     }
     val listState = rememberLazyListState()
+    if (onVisibleRows != null) {
+        LaunchedEffect(listState, channels) {
+            snapshotFlow {
+                val visible = listState.layoutInfo.visibleItemsInfo
+                (visible.firstOrNull()?.index ?: -1) to (visible.lastOrNull()?.index ?: -1)
+            }
+                .distinctUntilChanged()
+                .collect { (first, last) ->
+                    if (first >= 0 && last >= first && channels.isNotEmpty()) {
+                        onVisibleRows(channels.subList((first - VISIBLE_MARGIN).coerceAtLeast(0), (last + VISIBLE_MARGIN + 1).coerceAtMost(channels.size)))
+                    }
+                }
+        }
+    }
     val focusTarget = remember { FocusRequester() }
     // The row that owns [focusTarget]: the current channel at first, then wherever paging jumped to.
     var targetIndex by remember(currentIndex) { mutableIntStateOf(currentIndex) }
@@ -256,3 +275,6 @@ fun ChannelListOverlay(
         }
     }
 }
+
+/** Poterx: rows beyond the visible ones that [ChannelListOverlay.onVisibleRows] includes, each way. */
+private const val VISIBLE_MARGIN = 20

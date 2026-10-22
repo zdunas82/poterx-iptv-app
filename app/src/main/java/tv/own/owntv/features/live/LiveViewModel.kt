@@ -1953,7 +1953,18 @@ class LiveViewModel(
      * Live list and the channel-list overlay evict each other's work every time one opened.
      */
     private val nowPlayingCache = object : LinkedHashMap<Long, tv.own.owntv.core.parser.XtEpgEntry?>(256, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, tv.own.owntv.core.parser.XtEpgEntry?>?) = size > MAX_NOW_PLAYING
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, tv.own.owntv.core.parser.XtEpgEntry?>?) = size > nowPlayingCap
+    }
+
+    /**
+     * Poterx: the cache grows to fit the largest list asked about (plus headroom), so a playlist
+     * bigger than [MAX_NOW_PLAYING] no longer evicts its own rows while they are being filled in.
+     */
+    @Volatile private var nowPlayingCap = MAX_NOW_PLAYING
+
+    private fun growNowPlayingCap(listSize: Int) {
+        val wanted = listSize + NOW_PLAYING_HEADROOM
+        if (wanted > nowPlayingCap) nowPlayingCap = wanted
     }
 
     private val _nowPlaying = MutableStateFlow<Map<Long, tv.own.owntv.core.parser.XtEpgEntry?>>(emptyMap())
@@ -1999,18 +2010,61 @@ class LiveViewModel(
      * full set. Scrolled deep into a large category that is a dozen chunked queries a minute to learn
      * almost nothing new. The phone has always done it this way; this is the television adopting it.
      */
-    fun ensureNowPlaying(loaded: List<ChannelEntity>) {
+    fun ensureNowPlaying(loaded: List<ChannelEntity>) = ensureNowPlayingAround(loaded, null)
+
+    /**
+     * Poterx: [ensureNowPlaying] that answers the rows around [centerId] first.
+     *
+     * The in-player channel list opens on the playing channel, so its neighbours (about
+     * [NOW_PLAYING_WINDOW] each way) are resolved and published as one small batch before the rest
+     * of the list is filled in behind them, in chunks, each publishing as it lands. One query for a
+     * whole playlist used to leave every row blank until the last channel was answered.
+     */
+    fun ensureNowPlayingAround(loaded: List<ChannelEntity>, centerId: Long?) {
         if (loaded.isEmpty()) return
+        growNowPlayingCap(loaded.size)
         val known = cachedNowPlaying()
         val missing = loaded.filter { it.id !in known }
         if (missing.isEmpty()) return
+        val center = loaded.indexOfFirst { it.id == centerId }
+        val near = if (center < 0) emptyList() else {
+            loaded.subList((center - NOW_PLAYING_WINDOW).coerceAtLeast(0), (center + NOW_PLAYING_WINDOW + 1).coerceAtMost(loaded.size))
+                .filter { it.id !in known }
+        }
+        val nearIds = near.map { it.id }.toHashSet()
+        val rest = missing.filter { it.id !in nearIds }
         nowPlayingJob?.cancel()
         nowPlayingJob = viewModelScope.launch {
-            val found = runCatching { nowPlayingFor(missing) }.getOrDefault(emptyMap())
-            // Remember the ones with no guide too, as null — otherwise they are re-queried on
-            // every single append, which is most of the cost this removes.
-            publishNowPlaying(found + missing.filter { it.id !in found }.associate { it.id to null })
+            if (near.isNotEmpty()) resolveNowPlaying(near)
+            for (chunk in rest.chunked(NOW_PLAYING_CHUNK)) {
+                // A row the visible-window request answered meanwhile is skipped.
+                val stillMissing = cachedNowPlaying().let { c -> chunk.filter { it.id !in c } }
+                if (stillMissing.isNotEmpty()) resolveNowPlaying(stillMissing)
+            }
         }
+    }
+
+    private var nowPlayingVisibleJob: kotlinx.coroutines.Job? = null
+
+    /**
+     * Poterx: the rows a list has just scrolled onto the screen, resolved ahead of the background
+     * fill, the way the guide fetches rows as they come into view. Runs beside [ensureNowPlayingAround]
+     * rather than cancelling it, so the background fill carries on.
+     */
+    fun ensureNowPlayingVisible(rows: List<ChannelEntity>) {
+        if (rows.isEmpty()) return
+        val known = cachedNowPlaying()
+        val missing = rows.filter { it.id !in known }
+        if (missing.isEmpty()) return
+        nowPlayingVisibleJob?.cancel()
+        nowPlayingVisibleJob = viewModelScope.launch { resolveNowPlaying(missing) }
+    }
+
+    private suspend fun resolveNowPlaying(batch: List<ChannelEntity>) {
+        val found = runCatching { nowPlayingFor(batch) }.getOrDefault(emptyMap())
+        // Remember the ones with no guide too, as null — otherwise they are re-queried on
+        // every single append, which is most of the cost this removes.
+        publishNowPlaying(found + batch.filter { it.id !in found }.associate { it.id to null })
     }
 
     /**
@@ -2022,6 +2076,7 @@ class LiveViewModel(
      */
     fun refreshNowPlaying(loaded: List<ChannelEntity>) {
         if (loaded.isEmpty()) return
+        growNowPlayingCap(loaded.size)
         nowPlayingJob?.cancel()
         nowPlayingJob = viewModelScope.launch {
             val found = runCatching { nowPlayingFor(loaded) }.getOrDefault(emptyMap())
@@ -2187,6 +2242,12 @@ class LiveViewModel(
         /** Resolved "now playing" titles kept at once. Big enough for a large category plus the
          *  overlays that share the map, small enough that it cannot grow with the catalogue. */
         const val MAX_NOW_PLAYING = 2_000
+        /** Poterx: rows either side of the playing channel answered first when a list opens. */
+        const val NOW_PLAYING_WINDOW = 40
+        /** Poterx: the background fill's batch, each published as it lands. */
+        const val NOW_PLAYING_CHUNK = 120
+        /** Poterx: cache headroom above the largest list seen, for the preview pane and other lists. */
+        const val NOW_PLAYING_HEADROOM = 500
 
     }
 }

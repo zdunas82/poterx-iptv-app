@@ -422,7 +422,8 @@ fun OwnTVShell(
     // asks for nothing, and only genuinely new channels cost a query.
     val overlayNowPlaying by liveVm.nowPlaying.collectAsStateWithLifecycle()
     LaunchedEffect(showChannelList, zapChannels) {
-        if (showChannelList && zapChannels.size > 1) liveVm.ensureNowPlaying(zapChannels)
+        // Poterx: the rows around the playing channel first, the rest of the list behind them.
+        if (showChannelList && zapChannels.size > 1) liveVm.ensureNowPlayingAround(zapChannels, previewChannel?.id)
     }
     // Recently-watched channels for the right-hand history overlay — re-read each time it opens (and
     // after a zap, since tuning writes a new history row) so the newest channel is always on top.
@@ -1881,6 +1882,7 @@ fun OwnTVShell(
                             onSelect = { liveVm.ensurePlaying(it); showChannelList = false },
                             onDismiss = { showChannelList = false },
                             onOpenCategories = { liveVm.showCategories() },
+                            onVisibleRows = { liveVm.ensureNowPlayingVisible(it) },
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
