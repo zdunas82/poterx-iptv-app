@@ -44,7 +44,6 @@
     <string name="poterx_service_pin">Podaj PIN serwisowy</string>
     <string name="poterx_contact_title">Twój dostawca</string>
     <string name="poterx_contact_line">Kontakt: %1$s</string>
-    <string name="poterx_about_legal">Zawiera kod projektu OwnTV (GPLv3). Kod źródłowy: %1$s</string>
     <string name="poterx_guide_feed">Przewodnik programowy</string>
     <string name="poterx_guide_empty">Przewodnik skonfiguruje się zaraz po zalogowaniu.</string>
     <string name="poterx_guide_refresh_description">Jak często przewodnik programowy jest pobierany ponownie</string>

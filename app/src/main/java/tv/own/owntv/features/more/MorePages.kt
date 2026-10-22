@@ -658,7 +658,8 @@ internal fun AboutPage(vm: MoreCountsViewModel, entry: FocusRequester, onOpenLan
                 Text(
                     listOfNotNull(
                         checkedAt?.let { stringResource(R.string.more_about_checked, recordingWhen(it)) },
-                        stringResource(R.string.more_about_license),
+                        // Poterx: a locked build names no licence here (the provider's decision).
+                        if (tv.own.owntv.poterx.LockedSource.enabled) null else stringResource(R.string.more_about_license),
                     ).joinToString(sep),
                     style = stageText(17, 500), color = StageColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(top = 6.mpx),
@@ -697,15 +698,6 @@ internal fun AboutPage(vm: MoreCountsViewModel, entry: FocusRequester, onOpenLan
             val languages = tv.own.owntv.poterx.PoterxLocales.packaged.size
             StageTool(pluralStringResource(R.plurals.more_about_languages, languages, languages), onClick = onOpenLanguage, icon = OwnTVIcon.LIST, boxed = true, modifier = Modifier.focusRequester(entry))
             StageTool(stringResource(R.string.settings_check_updates), onClick = { showUpdate = true }, icon = OwnTVIcon.REFRESH, boxed = true, modifier = Modifier.focusRequester(updateFocus))
-        }
-        // Poterx: the licence notice the GPLv3 asks for (the code's origin and where its source is),
-        // in one dim line rather than a card.
-        if (tv.own.owntv.poterx.LockedSource.enabled) {
-            Text(
-                stringResource(R.string.poterx_about_legal, GITHUB_REPO),
-                style = stageText(13.5f, 500), color = StageColors.Dim, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 28.mpx).widthIn(max = 860.mpx),
-            )
         }
     }
     if (showUpdate) {
