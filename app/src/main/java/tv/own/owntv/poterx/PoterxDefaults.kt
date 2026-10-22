@@ -90,12 +90,40 @@ object PoterxDefaults {
                     if (settings.currentTmdbApiKey().isBlank()) settings.setTmdbApiKey(tmdb)
                     prefs.edit().putString(KEY_TMDB_APPLIED, tmdb.hashCode().toString()).apply()
                 }
+                // Descriptions, genres and trailers in the app's language (TMDB's default is English).
+                // Once per install; a language the user picked since is left alone.
+                if (!prefs.getBoolean(KEY_METADATA_LANG_DONE, false)) {
+                    if (settings.metadataLanguage.first().isBlank()) settings.setMetadataLanguage(DEFAULT_LANGUAGE)
+                    prefs.edit().putBoolean(KEY_METADATA_LANG_DONE, true).apply()
+                }
                 profileDao.getAllOnce().forEach { profile ->
                     val key = KEY_MODULES_PROFILE_PREFIX + profile.id
                     if (prefs.getBoolean(key, false)) return@forEach
                     settings.updateSportsConfig(profile.id) { it.copy(autoRebuild = AutoRebuild.MANUAL) }
                     settings.updateHomeConfig(profile.id) { it.copy(hidden = it.hidden + HomeRow.LIVE_SPORTS) }
                     prefs.edit().putBoolean(key, true).apply()
+                }
+            }
+        }
+    }
+
+    /**
+     * The Home page's Trending row is built once per playlist after a sync and then only every few
+     * days. Its first download can fail on a dropped connection and core does not retry it until
+     * the next sync, which left the row missing for hours. A playlist whose row was never built is
+     * asked again shortly after start; a built row is left to core's own schedule.
+     */
+    fun ensureTrending(scope: CoroutineScope, sourceDao: SourceDao, database: tv.own.owntv.core.database.OwnTVDatabase, scheduler: tv.own.owntv.core.sync.work.CatalogSyncScheduler) {
+        if (!LockedSource.enabled) return
+        scope.launch {
+            kotlinx.coroutines.delay(TRENDING_START_DELAY_MS)
+            runCatching {
+                val dao = database.trendingDao()
+                sourceDao.getAllOnce().filter { it.type == SourceType.XTREAM }.forEach { source ->
+                    val state = dao.getState(source.id)
+                    if (state == null || state.status == tv.own.owntv.core.database.entity.TrendingSnapshotStatus.NEVER_BUILT) {
+                        scheduler.enqueueTrendingRefresh(source.id)
+                    }
                 }
             }
         }
@@ -137,5 +165,8 @@ object PoterxDefaults {
     private const val KEY_MODULES_DONE = "modules_v1"
     private const val KEY_MODULES_PROFILE_PREFIX = "modules_v1_profile_"
     private const val KEY_TMDB_APPLIED = "tmdb_key_v1"
+    private const val KEY_METADATA_LANG_DONE = "metadata_lang_v1"
+    /** After the first screen and the guide check, never competing with them. */
+    private const val TRENDING_START_DELAY_MS = 25_000L
     private const val DEFAULT_LANGUAGE = "pl"
 }

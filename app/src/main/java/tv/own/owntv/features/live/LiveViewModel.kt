@@ -2023,7 +2023,7 @@ class LiveViewModel(
     fun ensureNowPlayingAround(loaded: List<ChannelEntity>, centerId: Long?) {
         if (loaded.isEmpty()) return
         growNowPlayingCap(loaded.size)
-        val known = cachedNowPlaying()
+        val known = cachedNowPlaying().dropEnded()
         val missing = loaded.filter { it.id !in known }
         if (missing.isEmpty()) return
         val center = loaded.indexOfFirst { it.id == centerId }
@@ -2053,12 +2053,20 @@ class LiveViewModel(
      */
     fun ensureNowPlayingVisible(rows: List<ChannelEntity>) {
         if (rows.isEmpty()) return
-        val known = cachedNowPlaying()
+        val known = cachedNowPlaying().dropEnded()
         val missing = rows.filter { it.id !in known }
         if (missing.isEmpty()) return
         nowPlayingVisibleJob?.cancel()
         nowPlayingVisibleJob = viewModelScope.launch { resolveNowPlaying(missing) }
     }
+
+    /**
+     * Poterx: a cached programme whose end has passed is no answer any more; without this, a row
+     * kept showing the programme that had ended ("0 min left") until something else re-asked.
+     * Channels with no guide (null) stay known: asking again would not change that.
+     */
+    private fun Map<Long, tv.own.owntv.core.parser.XtEpgEntry?>.dropEnded(now: Long = System.currentTimeMillis()): Map<Long, tv.own.owntv.core.parser.XtEpgEntry?> =
+        filterValues { it == null || it.stopMs > now }
 
     private suspend fun resolveNowPlaying(batch: List<ChannelEntity>) {
         val found = runCatching { nowPlayingFor(batch) }.getOrDefault(emptyMap())

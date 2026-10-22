@@ -425,6 +425,16 @@ fun OwnTVShell(
         // Poterx: the rows around the playing channel first, the rest of the list behind them.
         if (showChannelList && zapChannels.size > 1) liveVm.ensureNowPlayingAround(zapChannels, previewChannel?.id)
     }
+    // Poterx: programmes turn over on the minute while the list is open, as on the Live screen.
+    LaunchedEffect(showChannelList) {
+        if (!showChannelList) return@LaunchedEffect
+        while (true) {
+            val now = System.currentTimeMillis()
+            kotlinx.coroutines.delay(60_000 - (now % 60_000))
+            val rows = zapChannels
+            if (rows.isNotEmpty()) liveVm.refreshNowPlaying(rows)
+        }
+    }
     // Recently-watched channels for the right-hand history overlay — re-read each time it opens (and
     // after a zap, since tuning writes a new history row) so the newest channel is always on top.
     val historyEntries by produceState(emptyList<tv.own.owntv.core.database.dao.ChannelWithWatchedAt>(), showHistoryList, previewChannel?.id) {

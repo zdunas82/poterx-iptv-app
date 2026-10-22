@@ -28,15 +28,19 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 - **v0.2.0**: Ustawienia › Konto (login, stan, ważność, połączenia), Wyloguj (za PIN-em
   serwisowym, gdy wbudowany), kontakt do dostawcy przy błędzie logowania, User-Agent
   `PoterxTV/<wersja>` na playliście.
-- **v0.2.1** (w toku): „O aplikacji” bez odniesień do OwnTV: własna grupa Telegram z kodem QR,
-  bez chipa GitHub (nota GPLv3 ze źródłami jako jedna mała linia), blok tłumaczeń ukryty, opisy
-  aktualizacji, metadanych i napisów bez nazwy projektu. Własny klucz TMDB (`POTERX_TMDB_KEY`)
+- **v0.2.1**: „O aplikacji” bez odniesień do OwnTV: własna grupa Telegram z kodem QR, bez chipa
+  GitHub, blok tłumaczeń ukryty, opisy aktualizacji, metadanych i napisów bez nazwy projektu. Własny klucz TMDB (`POTERX_TMDB_KEY`)
   wbudowany w aplikację, bo wspólna usługa OwnTV odpowiada 403. Konto: statusy po polsku, pola
   tylko do odczytu bez strzałek. Wyszukiwanie: kanał o nazwie równej zapytaniu na górze.
 - **v0.2.2** (w toku): adres panelu nigdzie na ekranie: filtr `PoterxPrivacy` maskuje host w
   informacjach o strumieniu (wiersz „źródło” usunięty), w błędach odtwarzacza, synchronizacji i
   logowania, w dzienniku błędów i jego eksporcie; zakładka EPG w wersji zamkniętej to tylko
-  odświeżanie przewodnika, bez adresu i edycji.
+  odświeżanie przewodnika, bez adresu i edycji. „O aplikacji” bez linii o licencji i pochodzeniu
+  kodu (decyzja właściciela z 2026-10-22). Po audycie v0.2.1: logi informacyjne (Log.v/d/i/w)
+  wycięte z wydania przez R8, bo klient HTTP rdzenia logował `api_key`; lista kanałów przechodzi
+  do następnego programu (wpis z minionym końcem liczy się jako brak); metadane TMDB domyślnie po
+  polsku (opisy, gatunki, zwiastuny); sekcja „Teraz popularne”, której pierwsze pobranie padło,
+  próbuje ponownie 25 s po starcie.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.

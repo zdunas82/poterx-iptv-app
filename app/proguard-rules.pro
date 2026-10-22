@@ -22,3 +22,13 @@
 #     EpgAutoRefresh, PlaylistAutoRefresh, ...) round-trip through Enum.name/valueOf.
 #     Renaming a constant would silently reset settings and break old backups. ---
 -keep enum tv.own.owntv.** { *; }
+
+# --- Poterx: no informational logging in release. Core's HTTP client logs every request URL at
+#     Log.i (and failures at Log.w) with the account masked but not the TMDB api_key, and a
+#     customer's logcat is nobody's business. Errors (Log.e) and the in-app error log stay. ---
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+    public static int w(...);
+}

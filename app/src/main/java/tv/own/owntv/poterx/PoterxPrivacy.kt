@@ -25,10 +25,12 @@ object PoterxPrivacy {
         )
     }
 
-    /** [text] with every mention of the built-in server replaced by a mask. */
+    /** TMDB's query key, which core's own URL masking does not cover. */
+    private val apiKey = Regex("(?i)(api_key=)[^&\\s]*")
+
+    /** [text] with every mention of the built-in server replaced by a mask, and any TMDB key hidden. */
     fun hide(text: String): String {
-        if (patterns.isEmpty()) return text
-        var out = text
+        var out = text.replace(apiKey, "$1***")
         for (p in patterns) out = out.replace(p, MASK)
         return out
     }
@@ -40,7 +42,7 @@ object PoterxPrivacy {
 
     /** Rewrites a text file in place with [hide] applied (the exported error log). */
     fun scrubFile(path: String?) {
-        if (path == null || patterns.isEmpty()) return
+        if (path == null) return
         runCatching {
             val f = File(path)
             if (f.isFile) f.writeText(hide(f.readText()))
