@@ -964,6 +964,8 @@ fun SettingsScreen(
                 chip = languageChip, chipTone = TileTone.PRIMARY) { open(SettingsTab.LANGUAGE) },
             SettingsSearchEntry(stringResource(R.string.settings_group_profile), stringResource(R.string.profiles_title), stringResource(R.string.settings_search_keywords_profiles), OwnTVIcon.PERSON, TileTone.SECONDARY) { searchQuery = ""; searchMode = false; selectedGroup = SettingsGroup.PROFILE.ordinal },
             SettingsSearchEntry(stringResource(R.string.settings_group_sources), stringResource(R.string.settings_playlists), stringResource(R.string.settings_search_keywords_playlists), OwnTVIcon.PLAYLIST, TileTone.PRIMARY) { open(SettingsTab.SOURCES) },
+            // Poterx: the Account page exists on locked builds only, so it is searchable only there.
+            if (tv.own.owntv.poterx.LockedSource.enabled) SettingsSearchEntry(stringResource(R.string.settings_group_sources), stringResource(R.string.poterx_account_title), stringResource(R.string.poterx_account_description), OwnTVIcon.PERSON, TileTone.PRIMARY) { open(SettingsTab.ACCOUNT) } else null,
             SettingsSearchEntry(stringResource(R.string.settings_group_sources), stringResource(R.string.settings_epg_sources), stringResource(R.string.settings_search_keywords_epg), OwnTVIcon.EPG, TileTone.PRIMARY) { open(SettingsTab.EPG) },
             SettingsSearchEntry(stringResource(R.string.settings_group_sources), stringResource(R.string.content_epg_time_offset), stringResource(R.string.settings_search_keywords_epg_offset), OwnTVIcon.EPG, TileTone.SECONDARY,
                 chip = epgShiftLabel(epgOffset), chipTone = if (epgOffset == 0) TileTone.SECONDARY else TileTone.PRIMARY) { saveScroll(); dialogReturn = searchFieldFocus; showEpgOffset = true },
