@@ -75,4 +75,5 @@
     <string name="settings_language_help_translate">Pomóż przetłumaczyć aplikację na swój język</string>
     <string name="settings_language_contribution_description">Zeskanuj kod QR lub otwórz link, aby wybrać dowolny dostępny język i wnieść wkład w projekt tłumaczeń.</string>
     <string name="settings_language_contribution_qr_description">Kod QR do przeglądu projektu tłumaczeń</string>
+    <string name="settings_catchup_player">Odtwarzaj archiwum w</string>
 </resources>

@@ -61,7 +61,13 @@ fun LockedAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val ok = result as? SourceTestResult.Ok
     val statusText = when {
         test is SourceTestUi.Running -> stringResource(R.string.poterx_account_checking)
-        ok != null -> ok.status?.takeIf { it.isNotBlank() } ?: stringResource(R.string.poterx_account_active)
+        // The panel's own word, translated when it is one of the usual ones; anything else as written.
+        ok != null -> when (ok.status?.trim()?.lowercase()) {
+            null, "", "active" -> stringResource(R.string.poterx_account_active)
+            "expired" -> stringResource(R.string.poterx_account_expired)
+            "banned", "disabled" -> stringResource(R.string.poterx_account_blocked)
+            else -> ok.status
+        }
         result is SourceTestResult.Expired -> stringResource(R.string.poterx_account_expired)
         result is SourceTestResult.AuthFailed -> stringResource(R.string.poterx_account_rejected)
         result is SourceTestResult.Unreachable -> stringResource(R.string.poterx_account_unreachable)
@@ -94,7 +100,7 @@ fun LockedAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 icon = OwnTVIcon.PERSON,
                 title = stringResource(R.string.setup_username),
                 desc = stringResource(R.string.poterx_account_user_description),
-                value = SettingValue.Choice(source.username.orEmpty()),
+                value = SettingValue.Saved(source.username.orEmpty(), any = false),
                 onClick = {},
                 modifier = Modifier.focusRequester(first),
             )
@@ -110,7 +116,7 @@ fun LockedAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     icon = OwnTVIcon.EPG,
                     title = stringResource(R.string.poterx_account_expiry),
                     desc = stringResource(R.string.poterx_account_expiry_description),
-                    value = SettingValue.Choice(expiryText),
+                    value = SettingValue.Saved(expiryText, any = false),
                     onClick = {},
                 )
             }
@@ -119,7 +125,7 @@ fun LockedAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     icon = OwnTVIcon.NETWORK,
                     title = stringResource(R.string.poterx_account_connections),
                     desc = stringResource(R.string.poterx_account_connections_description),
-                    value = SettingValue.Choice(connectionsText),
+                    value = SettingValue.Saved(connectionsText, any = false),
                     onClick = {},
                 )
             }

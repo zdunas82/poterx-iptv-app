@@ -143,9 +143,12 @@ android {
             // line (shown on sign-in failures and on the Account page). Both ride in the sealed blob.
             val pin = poterxValue("POTERX_SERVICE_PIN", "poterx.servicePin")?.trim().orEmpty()
             val contact = poterxValue("POTERX_CONTACT", "poterx.contact")?.trim().orEmpty()
+            // Poterx v0.2.1: the provider's own TMDB API key (v3), so posters and descriptions come
+            // straight from TMDB instead of the upstream project's shared service.
+            val tmdb = poterxValue("POTERX_TMDB_KEY", "poterx.tmdbKey")?.trim().orEmpty()
             // Server alone is a valid lock: the user then types only a username and password.
             if (server.isNullOrBlank()) null
-            else listOf(PoterxLink.normalizeServer(server), user?.trim().orEmpty(), pass.orEmpty(), hls, pin, contact)
+            else listOf(PoterxLink.normalizeServer(server), user?.trim().orEmpty(), pass.orEmpty(), hls, pin, contact, tmdb)
         }
         val poterxSealed = poterxAccount?.let { PoterxLink.seal(it.joinToString("\n")) }
         buildConfigField("boolean", "POTERX_LOCKED", (poterxSealed != null).toString())

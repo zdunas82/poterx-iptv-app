@@ -30,6 +30,7 @@
     <string name="poterx_account_rejected">Logowanie odrzucone</string>
     <string name="poterx_account_unreachable">Brak połączenia z serwerem</string>
     <string name="poterx_account_unknown">Nieznany</string>
+    <string name="poterx_account_blocked">Zablokowane</string>
     <string name="poterx_account_trial">Konto testowe</string>
     <string name="poterx_account_expiry">Ważne do</string>
     <string name="poterx_account_expiry_description">Kiedy kończy się abonament</string>

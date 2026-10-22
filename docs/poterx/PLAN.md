@@ -30,7 +30,9 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   `PoterxTV/<wersja>` na playliście.
 - **v0.2.1** (w toku): „O aplikacji” bez odniesień do OwnTV: własna grupa Telegram z kodem QR,
   bez chipa GitHub (nota GPLv3 ze źródłami jako jedna mała linia), blok tłumaczeń ukryty, opisy
-  aktualizacji, metadanych i napisów bez nazwy projektu.
+  aktualizacji, metadanych i napisów bez nazwy projektu. Własny klucz TMDB (`POTERX_TMDB_KEY`)
+  wbudowany w aplikację, bo wspólna usługa OwnTV odpowiada 403. Konto: statusy po polsku, pola
+  tylko do odczytu bez strzałek. Wyszukiwanie: kanał o nazwie równej zapytaniu na górze.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.

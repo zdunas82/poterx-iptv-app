@@ -12,3 +12,4 @@ poterx.playlistUrl=http://TWOJ-HOST:80/playlist/UZYTKOWNIK/HASLO/m3u_plus
 #   Opcjonalnie (dowolna z form powyżej):
 #poterx.servicePin=1234            # PIN pytany przed wylogowaniem (puste = bez PIN-u)
 #poterx.contact=tel. 600 000 000   # kontakt do dostawcy pokazywany przy błędzie logowania i na ekranie Konto
+#poterx.tmdbKey=xxxxxxxx              # klucz API TMDB (v3) na plakaty i opisy filmów i seriali

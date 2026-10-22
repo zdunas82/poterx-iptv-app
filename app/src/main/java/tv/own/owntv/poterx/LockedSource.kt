@@ -28,6 +28,8 @@ object LockedSource {
         val servicePin: String = "",
         /** The provider's contact line (phone, e-mail, …), blank when none was built in. */
         val contact: String = "",
+        /** The provider's TMDB API key (v3) for posters and descriptions; blank when none was built in. */
+        val tmdbKey: String = "",
     )
 
     /** True for a build that carries an account. A build without one behaves like stock OwnTV. */
@@ -55,6 +57,7 @@ object LockedSource {
             preferHls = lines.getOrNull(3)?.trim() == "1",
             servicePin = lines.getOrNull(4)?.trim().orEmpty(),
             contact = lines.getOrNull(5)?.trim().orEmpty(),
+            tmdbKey = lines.getOrNull(6)?.trim().orEmpty(),
         )
     }.getOrNull()
 

@@ -31,6 +31,7 @@
     <string name="poterx_account_rejected">Sign-in refused</string>
     <string name="poterx_account_unreachable">Server not reachable</string>
     <string name="poterx_account_unknown">Unknown</string>
+    <string name="poterx_account_blocked">Blocked</string>
     <string name="poterx_account_trial">Trial account</string>
     <string name="poterx_account_expiry">Valid until</string>
     <string name="poterx_account_expiry_description">When the subscription ends</string>

@@ -114,7 +114,34 @@ class SearchViewModel(
 
     private suspend fun search(q: String): SearchResults {
         val pid = currentProfileId() ?: return SearchResults()
-        return searchReader.search(pid, ctx.value, q)
+        return searchReader.search(pid, ctx.value, q).let { it.copy(channels = rankChannels(it.channels, q)) }
+    }
+
+    /**
+     * Poterx: the channel the user most likely typed first. The store's order put "CI Polsat" and
+     * "Polsat Music" above "Polsat HD" for "polsat"; a name that equals the query (provider tags and
+     * quality suffixes aside) wins, then a name that starts with it, then one with a word starting
+     * with it, then the rest in the store's order. Stable, so ties keep their order.
+     */
+    private fun rankChannels(rows: List<tv.own.owntv.core.database.dao.ChannelSearchResult>, q: String): List<tv.own.owntv.core.database.dao.ChannelSearchResult> {
+        val needle = q.trim().lowercase()
+        if (needle.isEmpty() || rows.size < 2) return rows
+        fun tier(name: String): Int {
+            val n = tv.own.owntv.core.live.ProviderTags.parse(name).name.lowercase()
+            val bare = n.replace(QUALITY_SUFFIX, "").trim()
+            return when {
+                bare == needle || n == needle -> 0
+                n.startsWith(needle) -> 1
+                n.split(' ', '-', '/', '|', '.', '(', '[').any { it.startsWith(needle) } -> 2
+                else -> 3
+            }
+        }
+        return rows.sortedBy { tier(it.channel.name) }
+    }
+
+    private companion object {
+        /** Trailing picture-quality words a channel name carries in playlists: "Polsat HD", "TVP 1 FHD". */
+        val QUALITY_SUFFIX = Regex("\\s+(?:4k|uhd|fhd|full ?hd|hd|sd|hevc|h265|raw)\\b.*$")
     }
 
     // --- Stage page ---

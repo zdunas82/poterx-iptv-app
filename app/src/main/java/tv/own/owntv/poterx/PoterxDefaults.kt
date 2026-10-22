@@ -82,6 +82,14 @@ object PoterxDefaults {
                     settings.setNavMenuHidden(settings.navMenuHidden.first() + MainSection.SPORTS.name)
                     prefs.edit().putBoolean(KEY_MODULES_DONE, true).apply()
                 }
+                // The provider's TMDB key, applied as the user's own key (TMDB is then called directly).
+                // Keyed on the key itself, so a build carrying a different one re-applies; a key the
+                // user typed by hand in Settings stays, as it already differs from "nothing".
+                val tmdb = LockedSource.account?.tmdbKey.orEmpty()
+                if (tmdb.isNotBlank() && prefs.getString(KEY_TMDB_APPLIED, "") != tmdb.hashCode().toString()) {
+                    if (settings.currentTmdbApiKey().isBlank()) settings.setTmdbApiKey(tmdb)
+                    prefs.edit().putString(KEY_TMDB_APPLIED, tmdb.hashCode().toString()).apply()
+                }
                 profileDao.getAllOnce().forEach { profile ->
                     val key = KEY_MODULES_PROFILE_PREFIX + profile.id
                     if (prefs.getBoolean(key, false)) return@forEach
@@ -128,5 +136,6 @@ object PoterxDefaults {
     private const val KEY_PLAYBACK_DONE = "playback_v1"
     private const val KEY_MODULES_DONE = "modules_v1"
     private const val KEY_MODULES_PROFILE_PREFIX = "modules_v1_profile_"
+    private const val KEY_TMDB_APPLIED = "tmdb_key_v1"
     private const val DEFAULT_LANGUAGE = "pl"
 }
