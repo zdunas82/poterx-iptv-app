@@ -43,6 +43,7 @@
     <string name="poterx_service_pin">Podaj PIN serwisowy</string>
     <string name="poterx_contact_title">Twój dostawca</string>
     <string name="poterx_contact_line">Kontakt: %1$s</string>
+    <string name="poterx_about_legal">Zawiera kod projektu OwnTV (GPLv3). Kod źródłowy: %1$s</string>
     <string name="poterx_locked_title">Wbudowana lista kanałów</string>
     <string name="poterx_locked_body">%1$s ma wbudowaną Twoją listę kanałów. Nie można jej tutaj podejrzeć, zmienić, wyeksportować ani skopiować na inne urządzenie. Jeśli kanały przestaną działać, skontaktuj się z dostawcą.</string>
 </resources>

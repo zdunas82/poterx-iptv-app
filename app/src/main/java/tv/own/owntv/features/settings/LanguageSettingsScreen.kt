@@ -165,7 +165,8 @@ fun LanguageSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         stringResource(R.string.common_ok) to stringResource(R.string.settings_key_use),
         stringResource(R.string.common_back) to stringResource(R.string.settings_group_app),
     )
-    val translate: @Composable () -> Unit = { TranslateBlock() }
+    // Poterx: a locked build ships two languages and takes no translations, so the block is empty there.
+    val translate: @Composable () -> Unit = if (tv.own.owntv.poterx.LockedSource.enabled) { {} } else { { TranslateBlock() } }
     StageFullPage(
         parents = listOf(stringResource(R.string.settings_group_app)),
         title = stringResource(R.string.settings_language),

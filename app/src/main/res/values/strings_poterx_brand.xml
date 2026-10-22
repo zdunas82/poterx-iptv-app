@@ -34,7 +34,7 @@
     <string name="settings_help_app_icon">The Poterx TV icon on your TV’s home screen. The launcher may take a moment to show the change.</string>
     <string name="settings_help_bg_background">Stage draws Poterx TV’s own soft colors. Picture shows a picture of yours behind every screen. Plain is a flat dark fill.</string>
     <string name="settings_help_brand_accent">The Poterx TV logo in the menu, About and setup shows its play triangle in your accent color. The icon on the home screen keeps its own colors.</string>
-    <string name="settings_help_check_updates">Looks on GitHub for a newer Poterx TV now and offers to install it. Your playlists, favorites and settings stay as they are.</string>
+    <string name="settings_help_check_updates">Looks for a newer Poterx TV now and offers to install it. Your channels, favorites and settings stay as they are.</string>
     <string name="settings_help_fonts">The font used across Poterx TV, and how large text is drawn. Popups use the same font.</string>
     <string name="settings_help_startup">What Poterx TV shows when it starts: Home, the channel you watched last, your favorites, or a channel you pick.</string>
     <string name="settings_help_theme">Dark is what Poterx TV is designed for. System follows the TV’s own setting where it has one; Light suits a bright room.</string>
@@ -60,4 +60,19 @@
     <string name="sports_no_playlist_body">Scores, tables and alerts work without one. With a playlist, Poterx TV finds every channel showing this match.</string>
     <string name="sports_sport_buttons_description">My sports: only what you chose. All sports: every league Poterx TV knows, which takes longer to load.</string>
     <string name="update_ready">Poterx TV v<xliff:g id="available">%1$s</xliff:g> is ready (you have v<xliff:g id="current">%2$s</xliff:g>).</string>
+    <!-- Poterx v0.2.1: the About page, updates, metadata and translation texts without the upstream project's name, group or repository. -->
+    <string name="more_about_description">Your provider\'s television app for Android TV: channels, guide and archive from one account. Sign in once, updates install themselves.</string>
+    <string name="more_about_license">GPLv3</string>
+    <string name="settings_contributions">Questions, problems or a new subscription: write to us on Telegram.</string>
+    <string name="settings_join_telegram">Support on Telegram</string>
+    <string name="settings_telegram_qr">Support group QR code</string>
+    <string name="settings_check_updates_description">Get the latest version</string>
+    <string name="settings_line_check_updates">Get the latest version</string>
+    <string name="settings_metadata_clear_advanced_message">Your TMDB API key and self-hosted server address will be deleted from this device, and the app will go back to the built-in shared service with its daily share.</string>
+    <string name="settings_metadata_fair_share">The built-in metadata service is shared by every installation. If any minute, hourly or daily allowance is used up, TMDB details pause until that window resets; playlist information keeps working. Your own key or Worker removes this allowance.</string>
+    <string name="settings_metadata_shared_worker_description">Shared service · no setup</string>
+    <string name="settings_open_subtitles_access_priority">Leave both blank for the shared Worker. A custom Worker URL takes priority over a direct API key. Account sessions remain profile-specific.</string>
+    <string name="settings_language_help_translate">Help translate the app into your language</string>
+    <string name="settings_language_contribution_description">Scan the QR code or open the link to choose any available language and contribute to the translation project.</string>
+    <string name="settings_language_contribution_qr_description">QR code for the translation project overview</string>
 </resources>

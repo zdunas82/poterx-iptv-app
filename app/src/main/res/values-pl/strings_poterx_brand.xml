@@ -34,7 +34,7 @@
     <string name="settings_help_app_icon">Ikona Poterx TV na ekranie głównym telewizora. Launcher może potrzebować chwili, aby pokazać zmianę.</string>
     <string name="settings_help_bg_background">Stage pokazuje własne łagodne kolory Poterx TV. Obraz pokazuje Twój obraz za każdym ekranem. Gładkie to płaskie ciemne tło.</string>
     <string name="settings_help_brand_accent">Logo Poterx TV w menu, w sekcji Informacje i w konfiguracji pokazuje trójkąt odtwarzania w Twoim kolorze akcentu. Ikona na ekranie głównym zachowuje swoje kolory.</string>
-    <string name="settings_help_check_updates">Sprawdza teraz na GitHubie, czy jest nowsza wersja Poterx TV, i proponuje instalację. Playlisty, ulubione i ustawienia pozostają bez zmian.</string>
+    <string name="settings_help_check_updates">Sprawdza teraz, czy jest nowsza wersja Poterx TV, i proponuje instalację. Kanały, ulubione i ustawienia pozostają bez zmian.</string>
     <string name="settings_help_fonts">Czcionka używana w całym Poterx TV i rozmiar tekstu. Okienka używają tej samej czcionki.</string>
     <string name="settings_help_startup">Co Poterx TV pokazuje po uruchomieniu: stronę główną, ostatnio oglądany kanał, ulubione lub wybrany kanał.</string>
     <string name="settings_help_theme">Poterx TV jest zaprojektowany z myślą o ciemnym motywie. Systemowy wybiera ustawienie telewizora, jeśli je ma; jasny pasuje do jasnego pokoju.</string>
@@ -60,4 +60,19 @@
     <string name="sports_no_playlist_body">Wyniki, tabele i alerty działają bez niej. Z playlistą Poterx TV znajdzie każdy kanał pokazujący ten mecz.</string>
     <string name="sports_sport_buttons_description">Moje sporty: tylko to, co wybrano. Wszystkie sporty: każda liga znana Poterx TV, co wydłuża wczytywanie.</string>
     <string name="update_ready">Poterx TV v<xliff:g id="available">%1$s</xliff:g> jest gotowa (masz v<xliff:g id="current">%2$s</xliff:g>).</string>
+    <!-- Poterx v0.2.1: the About page, updates, metadata and translation texts without the upstream project's name, group or repository. -->
+    <string name="more_about_description">Aplikacja telewizyjna Twojego dostawcy na Android TV: kanały, przewodnik i archiwum z jednego konta. Logujesz się raz, aktualizacje instalują się same.</string>
+    <string name="more_about_license">GPLv3</string>
+    <string name="settings_contributions">Pytania, problemy lub nowy abonament: napisz do nas na Telegramie.</string>
+    <string name="settings_join_telegram">Pomoc na Telegramie</string>
+    <string name="settings_telegram_qr">Kod QR grupy pomocy</string>
+    <string name="settings_check_updates_description">Pobierz najnowszą wersję</string>
+    <string name="settings_line_check_updates">Pobierz najnowszą wersję</string>
+    <string name="settings_metadata_clear_advanced_message">Twój klucz API TMDB i adres własnego serwera zostaną usunięte z tego urządzenia, a aplikacja wróci do wbudowanej usługi współdzielonej z jej dziennym przydziałem.</string>
+    <string name="settings_metadata_fair_share">Wbudowana usługa metadanych jest współdzielona przez wszystkie instalacje, więc każde urządzenie otrzymuje każdego dnia własny przydział. Po jego wyczerpaniu plakaty i opisy zostają wstrzymane do czasu odnowienia; informacje z Twojej listy kanałów działają normalnie. Własny klucz API TMDB lub serwer usuwa ten limit.</string>
+    <string name="settings_metadata_shared_worker_description">Usługa współdzielona · bez konfiguracji</string>
+    <string name="settings_open_subtitles_access_priority">Pozostaw oba pola puste, aby korzystać ze wspólnego Workera. Własny adres URL Workera ma pierwszeństwo przed bezpośrednim kluczem API. Sesje konta pozostają przypisane do profilu.</string>
+    <string name="settings_language_help_translate">Pomóż przetłumaczyć aplikację na swój język</string>
+    <string name="settings_language_contribution_description">Zeskanuj kod QR lub otwórz link, aby wybrać dowolny dostępny język i wnieść wkład w projekt tłumaczeń.</string>
+    <string name="settings_language_contribution_qr_description">Kod QR do przeglądu projektu tłumaczeń</string>
 </resources>

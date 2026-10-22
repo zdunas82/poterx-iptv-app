@@ -25,9 +25,12 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   kanałów w odtwarzaczu z EPG najpierw wokół grającego kanału; pogoda i Sport Hub wyłączone
   domyślnie; tylko `pl` i `en` w APK.
 - **v0.1.4**: przewodnik kanału nie zamyka się pod trzymanym OK.
-- **v0.2.0** (w toku): Ustawienia › Konto (login, stan, ważność, połączenia), Wyloguj (za PIN-em
+- **v0.2.0**: Ustawienia › Konto (login, stan, ważność, połączenia), Wyloguj (za PIN-em
   serwisowym, gdy wbudowany), kontakt do dostawcy przy błędzie logowania, User-Agent
   `PoterxTV/<wersja>` na playliście.
+- **v0.2.1** (w toku): „O aplikacji” bez odniesień do OwnTV: własna grupa Telegram z kodem QR,
+  bez chipa GitHub (nota GPLv3 ze źródłami jako jedna mała linia), blok tłumaczeń ukryty, opisy
+  aktualizacji, metadanych i napisów bez nazwy projektu.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.

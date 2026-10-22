@@ -44,6 +44,7 @@
     <string name="poterx_service_pin">Enter the service PIN</string>
     <string name="poterx_contact_title">Your provider</string>
     <string name="poterx_contact_line">Contact: %1$s</string>
+    <string name="poterx_about_legal">Contains code from the OwnTV project (GPLv3). Source code: %1$s</string>
     <string name="poterx_locked_title">Built-in playlist</string>
     <string name="poterx_locked_body">%1$s comes with your playlist built in. It cannot be viewed, changed, exported or copied to another device from here. If your channels stop working, contact your provider.</string>
 </resources>
