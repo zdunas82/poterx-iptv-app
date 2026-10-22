@@ -26,7 +26,9 @@ trafia do APK dopiero przy budowaniu (zaszyfrowane AES‑GCM, R8 w wydaniu relea
    - konto wbudowane: `POTERX_PLAYLIST_URL` = linijka z panelu, np.
      `http://host:80/playlist/UZYTKOWNIK/HASLO/m3u_plus` (albo trzy osobne: `POTERX_SERVER`,
      `POTERX_USERNAME`, `POTERX_PASSWORD`);
-   - serwer wbudowany: tylko `POTERX_SERVER` = `http://host:80` — aplikacja poprosi o login i hasło.
+   - serwer wbudowany: tylko `POTERX_SERVER` = `http://host:80` — aplikacja poprosi o login i hasło;
+   - opcjonalnie `POTERX_SERVICE_PIN` (PIN pytany przed wylogowaniem) i `POTERX_CONTACT`
+     (kontakt do dostawcy pokazywany przy błędzie logowania i w Ustawienia › Konto).
    - (opcjonalnie, do podpisu wydań) `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 2. Zakładka **Actions → Android CI → Run workflow**. Możesz też podać linijkę (albo sam serwer) w
    polu formularza — wtedy buduje się APK dla konkretnego klienta bez zmiany sekretów.

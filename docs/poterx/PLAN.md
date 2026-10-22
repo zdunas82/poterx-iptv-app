@@ -19,6 +19,15 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 - **v0.1.0** (2026‑10‑21): pierwsze wydanie testowe, logowanie, lista, EPG, start na ostatnim kanale.
 - **v0.1.1**: polski start, Auto frame rate wyłączone, EPG pobierane od razu po zalogowaniu,
   „Poterx TV” we wszystkich komunikatach, dolny pasek kanału (picon, teraz/następnie, zegar).
+- **v0.1.2**: przewodnik rejestrowany przy każdym starcie (naprawa „Nie dodano EPG”), start na
+  zakładce TV z listą wszystkich kanałów.
+- **v0.1.3**: długie OK w odtwarzaczu → program kanału nad obrazem (archiwum, powrót na żywo); lista
+  kanałów w odtwarzaczu z EPG najpierw wokół grającego kanału; pogoda i Sport Hub wyłączone
+  domyślnie; tylko `pl` i `en` w APK.
+- **v0.1.4**: przewodnik kanału nie zamyka się pod trzymanym OK.
+- **v0.2.0** (w toku): Ustawienia › Konto (login, stan, ważność, połączenia), Wyloguj (za PIN-em
+  serwisowym, gdy wbudowany), kontakt do dostawcy przy błędzie logowania, User-Agent
+  `PoterxTV/<wersja>` na playliście.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.
@@ -26,12 +35,15 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 - [ ] Krótki kod Downloadera (aftv.news) i podmiana w instrukcji.
 
 ## v0.2 — odchudzenie i zamknięcie (1–2 tygodnie)
-- [ ] Wyłączone domyślnie w wersji zamkniętej: Sport Hub, pogoda, Trending, metadane TMDB,
-      OpenSubtitles (serwery OwnTV). Mniej zapytań przy starcie, szybszy ekran główny.
-- [ ] Mniejszy APK: tylko `pl` i `en` w `localeFilters`, usunięcie nieużywanych czcionek.
-- [ ] Własny User‑Agent `PoterxTV/<wersja>` + blokada innych agentów na panelu XUI.one.
-- [ ] Ekran **Konto** (status, ważność, limit połączeń z `user_info`) i **Wyloguj** za PIN‑em.
-- [ ] Dane kontaktowe dostawcy wbudowane przy budowaniu; pokazywane przy błędach logowania.
+- [x] Wyłączone domyślnie w wersji zamkniętej: Sport Hub, pogoda (v0.1.3). TMDB zostaje (filmy
+      i seriale); OpenSubtitles łączy się tylko na żądanie, więc nie wymaga przełącznika.
+- [x] Mniejszy APK: tylko `pl` i `en` w `localeFilters` (v0.1.3, 57,7 → 53,1 MB).
+- [ ] Mniejszy APK, ciąg dalszy: osobne APK per architektura albo wycięcie nieużywanych (libmpv,
+      ffmpeg to większość paczki); usunięcie nieużywanych czcionek.
+- [x] Własny User‑Agent `PoterxTV/<wersja>` (v0.2.0). Blokada innych agentów: po stronie panelu.
+- [x] Ekran **Konto** (status, ważność, połączenia z `user_info`) i **Wyloguj** za PIN‑em (v0.2.0).
+- [x] Dane kontaktowe dostawcy wbudowane przy budowaniu (`POTERX_CONTACT`); przy błędach logowania
+      i na ekranie Konto (v0.2.0).
 - [ ] Testy jednostkowe `PoterxLink` i `LockedSource` w CI.
 
 ## v0.3 — obsługa klientów na odległość

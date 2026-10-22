@@ -139,9 +139,13 @@ android {
             val user = fromLink?.get(1) ?: poterxValue("POTERX_USERNAME", "poterx.username")
             val pass = fromLink?.get(2) ?: poterxValue("POTERX_PASSWORD", "poterx.password")
             val hls = fromLink?.get(3) ?: (poterxValue("POTERX_PREFER_HLS", "poterx.preferHls") == "true").let { if (it) "1" else "0" }
+            // Poterx v0.2: an optional service PIN (asked before signing out) and the provider's contact
+            // line (shown on sign-in failures and on the Account page). Both ride in the sealed blob.
+            val pin = poterxValue("POTERX_SERVICE_PIN", "poterx.servicePin")?.trim().orEmpty()
+            val contact = poterxValue("POTERX_CONTACT", "poterx.contact")?.trim().orEmpty()
             // Server alone is a valid lock: the user then types only a username and password.
             if (server.isNullOrBlank()) null
-            else listOf(PoterxLink.normalizeServer(server), user?.trim().orEmpty(), pass.orEmpty(), hls)
+            else listOf(PoterxLink.normalizeServer(server), user?.trim().orEmpty(), pass.orEmpty(), hls, pin, contact)
         }
         val poterxSealed = poterxAccount?.let { PoterxLink.seal(it.joinToString("\n")) }
         buildConfigField("boolean", "POTERX_LOCKED", (poterxSealed != null).toString())

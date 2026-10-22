@@ -24,6 +24,10 @@ object LockedSource {
         val username: String,
         val password: String,
         val preferHls: Boolean,
+        /** Digits asked for before signing out; blank means signing out needs no PIN. */
+        val servicePin: String = "",
+        /** The provider's contact line (phone, e-mail, …), blank when none was built in. */
+        val contact: String = "",
     )
 
     /** True for a build that carries an account. A build without one behaves like stock OwnTV. */
@@ -49,6 +53,8 @@ object LockedSource {
             username = lines[1].trim(),
             password = lines[2],
             preferHls = lines.getOrNull(3)?.trim() == "1",
+            servicePin = lines.getOrNull(4)?.trim().orEmpty(),
+            contact = lines.getOrNull(5)?.trim().orEmpty(),
         )
     }.getOrNull()
 

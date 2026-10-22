@@ -127,7 +127,12 @@ jobs:
           SECRET_SERVER: ${{ secrets.POTERX_SERVER }}
           SECRET_USERNAME: ${{ secrets.POTERX_USERNAME }}
           SECRET_PASSWORD: ${{ secrets.POTERX_PASSWORD }}
+          SECRET_SERVICE_PIN: ${{ secrets.POTERX_SERVICE_PIN }}
+          SECRET_CONTACT: ${{ secrets.POTERX_CONTACT }}
         run: |
+          # Optional: a service PIN asked before signing out, and the provider's contact line.
+          if [ -n "$SECRET_SERVICE_PIN" ]; then echo "POTERX_SERVICE_PIN=$SECRET_SERVICE_PIN" >> "$GITHUB_ENV"; echo "Service PIN: set."; fi
+          if [ -n "$SECRET_CONTACT" ]; then echo "POTERX_CONTACT=$SECRET_CONTACT" >> "$GITHUB_ENV"; echo "Provider contact: set."; fi
           # The form field wins over the secrets. Everything is masked so it never shows in the log.
           if [ -n "$INPUT_PLAYLIST_URL" ]; then
             echo "::add-mask::$INPUT_PLAYLIST_URL"

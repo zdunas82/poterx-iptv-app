@@ -107,7 +107,7 @@ import tv.own.owntv.ui.theme.primary
 
 internal enum class TileTone { PRIMARY, SECONDARY, TERTIARY }
 
-private enum class SettingsTab { ROOT, LANGUAGE, SOURCES, EPG, BACKUP, LOCAL_SYNC, CUSTOMIZE, HOME, NETWORK, DNS, METADATA, OPEN_SUBTITLES, WEATHER, CH_NAV, PANEL_WIDTH, GUIDE_WIDTH, GLASS_EFFECT, CONTENT_MENUS, FONTS, BROWSING, SUBTITLE_STYLE, SPORTS }
+private enum class SettingsTab { ROOT, LANGUAGE, SOURCES, EPG, BACKUP, LOCAL_SYNC, CUSTOMIZE, HOME, NETWORK, DNS, METADATA, OPEN_SUBTITLES, WEATHER, CH_NAV, PANEL_WIDTH, GUIDE_WIDTH, GLASS_EFFECT, CONTENT_MENUS, FONTS, BROWSING, SUBTITLE_STYLE, SPORTS, ACCOUNT }
 
 @Composable
 internal fun surroundModeLabel(mode: SurroundMode): String = stringResource(
@@ -408,6 +408,8 @@ fun SettingsScreen(
         SettingsTab.LANGUAGE -> { LanguageSettingsScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
         // Poterx: on a locked build the pages that could show, edit or copy the account are one info page.
         SettingsTab.SOURCES -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedSourcesScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) else ManageSourcesScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
+        // Poterx: the signed-in account (status, expiry, connections) and signing out; locked builds only.
+        SettingsTab.ACCOUNT -> { tv.own.owntv.poterx.LockedAccountScreen(onBack = { tab = SettingsTab.ROOT }, modifier = modifier) }
         SettingsTab.EPG -> { tv.own.owntv.features.settings.EpgSourcesScreen(onBack = { tab = SettingsTab.ROOT; consumeEpgAdd = false }, modifier = modifier, startOnAdd = consumeEpgAdd) }
         SettingsTab.BACKUP -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedInfoScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) else BackupScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) }
         SettingsTab.LOCAL_SYNC -> { if (tv.own.owntv.poterx.LockedSource.enabled) tv.own.owntv.poterx.LockedInfoScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) else LocalSyncScreen(onBack = { tab = SettingsTab.ROOT }, modifier = sub) }
@@ -500,6 +502,14 @@ fun SettingsScreen(
             title = stringResource(R.string.settings_playlists), desc = stringResource(R.string.settings_playlists_description),
             focus = rowFocus.getValue(SettingsTab.SOURCES),
             onClick = { open(SettingsTab.SOURCES) },
+        ),
+        // Poterx: Account — who is signed in, what the panel says, sign out. Locked builds only.
+        RootRow(
+            tabRowKey(SettingsTab.ACCOUNT), TileTone.PRIMARY, OwnTVIcon.PERSON,
+            hidden = !tv.own.owntv.poterx.LockedSource.enabled,
+            title = stringResource(R.string.poterx_account_title), desc = stringResource(R.string.poterx_account_description),
+            focus = rowFocus.getValue(SettingsTab.ACCOUNT),
+            onClick = { open(SettingsTab.ACCOUNT) },
         ),
         RootRow(
             tabRowKey(SettingsTab.EPG), TileTone.PRIMARY, OwnTVIcon.EPG,

@@ -95,6 +95,8 @@ fun LockedOnboarding(
                 server = account.server,
                 username = account.username.ifBlank { username.trim() },
                 password = account.password.ifBlank { password },
+                // Every request to the panel carries this app's name, so the provider can tell it apart.
+                userAgent = PoterxAccount.userAgent,
                 // The channel list refreshes itself twice a day; Settings › Playlists changes that.
                 autoRefresh = PlaylistRefresh(PlaylistAutoRefresh.HOURS_12),
                 preferHls = account.preferHls,
@@ -141,6 +143,7 @@ fun LockedOnboarding(
                         style = stageText(20, 500), color = if (s is SourceImporter.ImportState.Failed) StageColors.Danger else StageColors.Muted,
                         textAlign = TextAlign.Center, maxLines = 4, overflow = TextOverflow.Ellipsis,
                     )
+                    if (s is SourceImporter.ImportState.Failed) LockedContactLine()
                     StageFieldRow(
                         icon = OwnTVIcon.PERSON,
                         label = stringResource(R.string.setup_username),
@@ -176,6 +179,7 @@ fun LockedOnboarding(
                         style = stageText(20, 500), color = StageColors.Muted, textAlign = TextAlign.Center,
                         maxLines = 4, overflow = TextOverflow.Ellipsis,
                     )
+                    LockedContactLine()
                     Row(horizontalArrangement = Arrangement.spacedBy(16.mpx)) {
                         StageButton(
                             stringResource(R.string.setup_try_again_caps),
@@ -211,4 +215,16 @@ fun LockedOnboarding(
             }
         }
     }
+}
+
+/** The provider's contact line under a failure, when the build carries one: who to call about it. */
+@Composable
+private fun LockedContactLine() {
+    val contact = LockedSource.account?.contact.orEmpty()
+    if (contact.isBlank()) return
+    Text(
+        stringResource(R.string.poterx_contact_line, contact),
+        style = stageText(20, 600), color = StageColors.Text, textAlign = TextAlign.Center,
+        maxLines = 2, overflow = TextOverflow.Ellipsis,
+    )
 }
