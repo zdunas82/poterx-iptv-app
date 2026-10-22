@@ -40,7 +40,10 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   wycięte z wydania przez R8, bo klient HTTP rdzenia logował `api_key`; lista kanałów przechodzi
   do następnego programu (wpis z minionym końcem liczy się jako brak); metadane TMDB domyślnie po
   polsku (opisy, gatunki, zwiastuny); sekcja „Teraz popularne”, której pierwsze pobranie padło,
-  próbuje ponownie 25 s po starcie.
+  próbuje ponownie 25 s po starcie. Film bez szczegółów TMDB dostaje jedną ponowną próbę przy
+  otwarciu menu (poza opóźnieniem fokusu; zapamiętany „brak dopasowania” jest czyszczony), a
+  „Szczegóły filmu” bez danych pobierają je zamiast nic nie robić. Nagłówek Filmów liczy wyniki
+  wyszukiwania, data pod zegarem jaśniejsza, podgląd TV gra dalej przy przeglądaniu kategorii.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.

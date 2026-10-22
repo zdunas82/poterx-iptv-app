@@ -570,6 +570,31 @@ class MovieViewModel(
      * Manual "Refetch TMDB details": clear this movie's cached match/details (incl. a 7-day
      * negative cache) and re-trigger [resolveMovie] for the focused movie via the meta-refresh tick.
      */
+    /** Poterx: titles given their one retry this session (see [ensureMovieMetaOnce]). */
+    private val metaRetried = java.util.concurrent.ConcurrentHashMap.newKeySet<Long>()
+
+    /**
+     * Poterx: called when a title's menu opens. A title whose details never arrived (the focus
+     * lookup was cancelled by scrolling, or the search found no confident match and was remembered
+     * as such for a week) is resolved again here, outside the focus debounce so nothing cancels it;
+     * when that still finds nothing, the remembered "no match" is cleared and the title is searched
+     * afresh (now in the app's language). Once per title per session, so a true miss costs little.
+     */
+    fun ensureMovieMetaOnce(movie: MovieEntity) {
+        if (!metaRetried.add(movie.id)) return
+        if (resolvedMeta[movie.id] != null) return
+        viewModelScope.launch {
+            val cache = runCatching { metadata.resolveMovie(movie) }.getOrNull()
+            if (cache != null) {
+                resolvedMeta[movie.id] = cache
+            } else {
+                runCatching { metadata.clearMovie(movie) }
+                resolvedMeta.remove(movie.id)
+            }
+            _metaRefreshTick.value++
+        }
+    }
+
     fun refetchMovieMeta(movie: MovieEntity) {
         viewModelScope.launch {
             runCatching { metadata.clearMovie(movie) }

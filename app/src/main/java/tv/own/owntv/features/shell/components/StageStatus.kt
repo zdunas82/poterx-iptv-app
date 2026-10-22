@@ -130,7 +130,8 @@ fun clockColor(stored: String, default: Color): Color = when (stored) {
 @Composable
 fun StageClock(weatherInfo: WeatherInfo?, fahrenheit: Boolean, colors: ClockColors) {
     val timeColor = clockColor(colors.time, StageColors.Text)
-    val dateColor = clockColor(colors.date, StageColors.Muted)
+    // Poterx: the date all but vanished on light backdrops; a locked build starts it brighter.
+    val dateColor = clockColor(colors.date, if (tv.own.owntv.poterx.LockedSource.enabled) StageColors.Text.copy(alpha = 0.82f) else StageColors.Muted)
     val weatherColor = clockColor(colors.weather, StageColors.Muted)
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
