@@ -44,6 +44,8 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   otwarciu menu (poza opóźnieniem fokusu; zapamiętany „brak dopasowania” jest czyszczony), a
   „Szczegóły filmu” bez danych pobierają je zamiast nic nie robić. Nagłówek Filmów liczy wyniki
   wyszukiwania, data pod zegarem jaśniejsza, podgląd TV gra dalej przy przeglądaniu kategorii.
+  OK na plakacie filmu otwiera stronę tytułu (opis, obsada, przyciski Odtwórz, Zwiastun,
+  Ulubione, Pobierz szczegóły); film startuje dopiero z „Odtwórz”.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.

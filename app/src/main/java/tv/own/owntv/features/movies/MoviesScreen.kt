@@ -482,6 +482,17 @@ fun MoviesScreen(
     }
     val targetMovieId = if (rememberMovies) perCategoryMovieIds[selectedKey] ?: selectedMovie?.id else selectedMovie?.id
     val openMenu: (MovieEntity, Int) -> Unit = { movie, index -> contextMovie = movie; contextMovieId = movie.id; contextMovieIndex = index; vm.ensureMovieMetaOnce(movie) }
+    // Poterx: OK on a poster opens the title's page (details, Play, Trailer, Favourite) rather than
+    // starting the film at once; Play on that page is what starts it. Stock builds play directly.
+    val openMovie: (MovieEntity, Int) -> Unit = { movie, index ->
+        if (tv.own.owntv.poterx.LockedSource.enabled) {
+            contextMovieId = movie.id; contextMovieIndex = index
+            vm.ensureMovieMetaOnce(movie)
+            detailsMovie = movie
+        } else {
+            startMovie(movie)
+        }
+    }
     val onMovieFocus: (MovieEntity) -> Unit = { movie ->
         vm.onMovieFocused(movie)
         if (rememberMovies) perCategoryMovieIds[selectedKey] = movie.id
@@ -628,7 +639,7 @@ fun MoviesScreen(
                                         width = 196.mpx, height = 294.mpx,
                                         progress = prog?.takeIf { it.durationMs > 0 }?.let { it.positionMs.toFloat() / it.durationMs },
                                         watched = done,
-                                        onClick = { startMovie(movie) },
+                                        onClick = { openMovie(movie, index) },
                                         onLongClick = { openMenu(movie, index) },
                                         modifier = Modifier
                                             .gridFocusTarget(
@@ -746,7 +757,7 @@ fun MoviesScreen(
                                     placeholder = OwnTVIcon.MOVIES,
                                     progress = if (done || prog == null || prog.durationMs <= 0) null else prog.positionMs.toFloat() / prog.durationMs,
                                     mark = playlistMarks[movie.sourceId],
-                                    onClick = { startMovie(movie) },
+                                    onClick = { openMovie(movie, index) },
                                     onLongClick = { openMenu(movie, index) },
                                     modifier = Modifier
                                         .gridFocusTarget(
@@ -798,7 +809,7 @@ fun MoviesScreen(
                                     compact = true,
                                     progress = prog?.takeIf { it.durationMs > 0 }?.let { it.positionMs.toFloat() / it.durationMs },
                                     watched = done,
-                                    onClick = { startMovie(movie) },
+                                    onClick = { openMovie(movie, index) },
                                     onLongClick = { openMenu(movie, index) },
                                     modifier = Modifier
                                         .gridFocusTarget(
@@ -1033,9 +1044,19 @@ fun MoviesScreen(
     // Windowed TMDB details popup — read-only, Back exits.
     detailsMovie?.let { m ->
         val cache = selectedMovieMeta?.takeIf { it.movieId == m.id }?.cache
+        // Poterx: the page is where playback starts from, so it carries the title's actions.
+        val actions = if (!tv.own.owntv.poterx.LockedSource.enabled) emptyList() else buildList {
+            add(tv.own.owntv.features.shell.components.MediaDetailsAction(stringResource(R.string.content_play), OwnTVIcon.PLAY, tinted = true) { detailsMovie = null; startMovie(m) })
+            val key = if (metadataMode.enrich) cache?.trailerKey else null
+            if (key != null) add(tv.own.owntv.features.shell.components.MediaDetailsAction(stringResource(R.string.content_play_trailer), OwnTVIcon.VIDEO) { detailsMovie = null; trailerTitle = m.name; trailerVideoKey = key })
+            val fav = favoriteIds.contains(m.id)
+            add(tv.own.owntv.features.shell.components.MediaDetailsAction(stringResource(if (fav) R.string.content_remove_favourite else R.string.content_add_favourite), OwnTVIcon.FAVORITE) { vm.toggleFavorite(m) })
+            if (cache == null && metadataMode.enrich) add(tv.own.owntv.features.shell.components.MediaDetailsAction(stringResource(R.string.content_refetch_tmdb), OwnTVIcon.REFRESH) { toast.show(refetchingTmdbMessage); vm.refetchMovieMeta(m) })
+        }
         MediaDetailsScreen(
             details = buildMovieDetails(m, cache, metadataMode.tmdbWins),
             onExit = { detailsMovie = null },
+            actions = actions,
         )
     }
 

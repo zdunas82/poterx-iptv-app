@@ -77,10 +77,28 @@ data class MediaDetailsUi(
  * tags, the overview and the cast. Purely for reading: **Up/Down scroll, Back exits, nothing is
  * selectable** — the page owns focus and turns Up/Down into a scroll, so the D-pad cannot leak behind.
  */
+/** Poterx: a button on the details page (Play, Trailer, Favourite…); the first one takes focus. */
+@Immutable
+data class MediaDetailsAction(
+    val text: String,
+    val icon: tv.own.owntv.ui.components.OwnTVIcon? = null,
+    val tinted: Boolean = false,
+    val onClick: () -> Unit,
+)
+
 @Composable
-fun MediaDetailsScreen(details: MediaDetailsUi, onExit: () -> Unit, modifier: Modifier = Modifier) {
+fun MediaDetailsScreen(
+    details: MediaDetailsUi,
+    onExit: () -> Unit,
+    modifier: Modifier = Modifier,
+    // Poterx: with actions the page is a landing page before playback: focus starts on the first
+    // button, ◀ ▶ move between them, OK presses, Up/Down still scroll (the buttons leave those keys
+    // to the page), Back exits. Without actions it stays the read-only page it was.
+    actions: List<MediaDetailsAction> = emptyList(),
+) {
     val scroll = rememberScrollState()
     val focus = remember { FocusRequester() }
+    val firstAction = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
     val step = 260f
     val onKey: (androidx.compose.ui.input.key.KeyEvent) -> Boolean = onKey@{ e ->
@@ -99,7 +117,7 @@ fun MediaDetailsScreen(details: MediaDetailsUi, onExit: () -> Unit, modifier: Mo
     }
     val page = stageTone(Color(0xFF070B0E), LocalStagePalette.current.page)
     tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = onExit, stageLayout = true, stageScaled = false) {
-        LaunchedEffect(Unit) { kotlinx.coroutines.delay(60); runCatching { focus.requestFocus() } }
+        LaunchedEffect(Unit) { kotlinx.coroutines.delay(60); runCatching { (if (actions.isEmpty()) focus else firstAction).requestFocus() } }
         Box(modifier.fillMaxSize().background(page).trapAllFocusExit()) {
             if (!details.backdropUrl.isNullOrBlank()) {
                 AsyncImage(
@@ -134,6 +152,16 @@ fun MediaDetailsScreen(details: MediaDetailsUi, onExit: () -> Unit, modifier: Mo
                             FlowRow(Modifier.padding(top = 16.mpx), horizontalArrangement = Arrangement.spacedBy(10.mpx), verticalArrangement = Arrangement.spacedBy(10.mpx)) {
                                 details.genres.forEach { tv.own.owntv.ui.stage.StageTag(it) }
                             }
+                        }
+                    }
+                }
+                if (actions.isNotEmpty()) {
+                    Row(Modifier.padding(top = 30.mpx), horizontalArrangement = Arrangement.spacedBy(14.mpx)) {
+                        actions.forEachIndexed { i, a ->
+                            tv.own.owntv.ui.stage.StageButton(
+                                a.text, onClick = a.onClick, icon = a.icon, tinted = a.tinted,
+                                modifier = if (i == 0) Modifier.focusRequester(firstAction) else Modifier,
+                            )
                         }
                     }
                 }
