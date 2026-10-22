@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import tv.own.owntv.core.i18n.LocaleStore
 import tv.own.owntv.core.i18n.SupportedLocale
-import tv.own.owntv.core.i18n.SupportedLocales
 import java.util.Locale
 
 /**
@@ -21,7 +20,7 @@ class LanguageSettingsViewModel(
 
     /** Packaged + picker-visible catalogue rows, A–Z by English name. System default is not in this list. */
     val pickerRows: List<SupportedLocale> =
-        SupportedLocales.pickerRows.sortedBy { it.englishName.lowercase(Locale.ROOT) }
+        tv.own.owntv.poterx.PoterxLocales.pickerRows.sortedBy { it.englishName.lowercase(Locale.ROOT) }
 
     fun setLocale(tag: String) {
         viewModelScope.launch { localeStore.set(tag) }

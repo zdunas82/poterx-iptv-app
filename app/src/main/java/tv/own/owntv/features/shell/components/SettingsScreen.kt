@@ -2752,7 +2752,7 @@ private fun stageRowExtras(
     val popupStep: (Int) -> Unit = { step ->
         onSetFont(font.copy(popupSizePercent = tv.own.owntv.core.theme.PopupSizeScale.clamp(font.popupSizePercent + step * tv.own.owntv.core.theme.PopupSizeScale.STEP)))
     }
-    val languages = tv.own.owntv.core.i18n.SupportedLocales.all.count { it.packaged }
+    val languages = tv.own.owntv.poterx.PoterxLocales.packaged.size
     val valueStyle = tv.own.owntv.ui.theme.stageText(18, 700)
     return mapOf(
         "tab_SOURCES" to RowExtra(

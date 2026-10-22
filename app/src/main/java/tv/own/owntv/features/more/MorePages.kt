@@ -61,7 +61,6 @@ import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import tv.own.owntv.BuildConfig
 import tv.own.owntv.R
-import tv.own.owntv.core.i18n.SupportedLocales
 import tv.own.owntv.core.model.MediaType
 import tv.own.owntv.core.update.UpdateManager
 import tv.own.owntv.features.downloads.recordingWhen
@@ -693,7 +692,7 @@ internal fun AboutPage(vm: MoreCountsViewModel, entry: FocusRequester, onOpenLan
                 OwnTVIcon(OwnTVIcon.NETWORK, StageColors.Text, Modifier.size(18.mpx))
                 Text(GITHUB_REPO, style = stageText(16, 700), color = StageColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            val languages = SupportedLocales.all.count { it.packaged }
+            val languages = tv.own.owntv.poterx.PoterxLocales.packaged.size
             StageTool(pluralStringResource(R.plurals.more_about_languages, languages, languages), onClick = onOpenLanguage, icon = OwnTVIcon.LIST, boxed = true, modifier = Modifier.focusRequester(entry))
             StageTool(stringResource(R.string.settings_check_updates), onClick = { showUpdate = true }, icon = OwnTVIcon.REFRESH, boxed = true, modifier = Modifier.focusRequester(updateFocus))
         }

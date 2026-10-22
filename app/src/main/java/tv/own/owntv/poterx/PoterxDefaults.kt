@@ -5,14 +5,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import tv.own.owntv.core.database.dao.ProfileDao
 import tv.own.owntv.core.database.dao.SourceDao
 import tv.own.owntv.core.epg.EpgSourceStore
 import tv.own.owntv.core.i18n.LocaleStore
+import tv.own.owntv.core.model.HomeRow
 import tv.own.owntv.core.model.SourceType
+import tv.own.owntv.core.nav.MainSection
 import tv.own.owntv.core.repository.EpgRepository
 import tv.own.owntv.core.settings.EpgAutoRefresh
 import tv.own.owntv.core.settings.EpgRefresh
 import tv.own.owntv.core.settings.SettingsRepository
+import tv.own.owntv.core.sports.AutoRebuild
 import tv.own.owntv.features.settings.runSemiAutoEpgSync
 
 /**
@@ -59,6 +63,37 @@ object PoterxDefaults {
     }
 
     /**
+     * The optional modules that talk to third-party services start switched off: the weather chip
+     * (once per install) and, per profile, the Sports Hub's automatic board rebuild (set to manual)
+     * with its Home row and rail icon hidden. Nothing is fetched until the user turns a module on in
+     * Settings (Weather, Sports, Navigation menu, Home). OpenSubtitles needs no switch: it only
+     * contacts its service when the user searches for subtitles or signs in.
+     *
+     * Runs on every start, so a profile created later (sign-in happens after the first start) gets
+     * the same defaults the first time it is seen; each profile is marked once and then left alone.
+     */
+    fun applyModules(context: Context, scope: CoroutineScope, settings: SettingsRepository, profileDao: ProfileDao) {
+        if (!LockedSource.enabled) return
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        scope.launch {
+            runCatching {
+                if (!prefs.getBoolean(KEY_MODULES_DONE, false)) {
+                    settings.setWeatherEnabled(false)
+                    settings.setNavMenuHidden(settings.navMenuHidden.first() + MainSection.SPORTS.name)
+                    prefs.edit().putBoolean(KEY_MODULES_DONE, true).apply()
+                }
+                profileDao.getAllOnce().forEach { profile ->
+                    val key = KEY_MODULES_PROFILE_PREFIX + profile.id
+                    if (prefs.getBoolean(key, false)) return@forEach
+                    settings.updateSportsConfig(profile.id) { it.copy(autoRebuild = AutoRebuild.MANUAL) }
+                    settings.updateHomeConfig(profile.id) { it.copy(hidden = it.hidden + HomeRow.LIVE_SPORTS) }
+                    prefs.edit().putBoolean(key, true).apply()
+                }
+            }
+        }
+    }
+
+    /**
      * The guide is part of the product, not an option: a locked build whose playlist has no EPG
      * source yet registers the panel's own xmltv.php feed and downloads it, and every guide feed
      * without a refresh choice gets one (every 12 h). Runs on each start and acts only when needed,
@@ -91,5 +126,7 @@ object PoterxDefaults {
     private const val PREFS = "poterx_defaults"
     private const val KEY_LOCALE_DONE = "locale_v1"
     private const val KEY_PLAYBACK_DONE = "playback_v1"
+    private const val KEY_MODULES_DONE = "modules_v1"
+    private const val KEY_MODULES_PROFILE_PREFIX = "modules_v1_profile_"
     private const val DEFAULT_LANGUAGE = "pl"
 }

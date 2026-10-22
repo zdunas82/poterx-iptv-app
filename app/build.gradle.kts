@@ -26,6 +26,21 @@ val packagedLocaleQualifiers: Set<String> = run {
     }.toSet()
 }
 
+// Poterx: a locked build (server or playlist line supplied, see defaultConfig below) packages Polish
+// and English only. Mirrors PoterxLocales.qualifiers in the app, which narrows the language picker.
+val poterxLocaleQualifiers: Set<String> = setOf("en", "pl")
+val poterxLockedBuild: Boolean = run {
+    val props = Properties().apply {
+        val f = rootProject.file("poterx.properties")
+        if (f.isFile) f.inputStream().use { load(it) }
+    }
+    fun present(env: String, property: String): Boolean =
+        !System.getenv(env).isNullOrBlank() ||
+            !providers.gradleProperty(property).orNull.isNullOrBlank() ||
+            !props.getProperty(property).isNullOrBlank()
+    present("POTERX_PLAYLIST_URL", "poterx.playlistUrl") || present("POTERX_SERVER", "poterx.server")
+}
+
 plugins {
     alias(libs.plugins.android.application)
     // Kotlin is provided by AGP 9's built-in Kotlin support. KSP 2.3.6+ is compatible with it.
@@ -233,7 +248,8 @@ android {
         // debug-only pseudolocale qualifiers (`en-rXA`, `ar-rXB`) are added back for debug variants via
         // the androidComponents variant API below; release deliberately ships neither.
         // Equivalent to `localeFilters += ...` but avoids confusion with the SetProperty variant form.
-        localeFilters.addAll(packagedLocaleQualifiers)
+        // Poterx: Polish and English only on a locked build (smaller APK, quicker updates).
+        localeFilters.addAll(if (poterxLockedBuild) poterxLocaleQualifiers else packagedLocaleQualifiers)
     }
 
     lint {
