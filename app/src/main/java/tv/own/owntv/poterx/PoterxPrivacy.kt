@@ -35,8 +35,6 @@ object PoterxPrivacy {
         return out
     }
 
-    fun hide(text: String?): String? = text?.let { hide(it) }
-
     /** True when [text] mentions the built-in server at all. */
     fun mentionsServer(text: String): Boolean = patterns.any { it.containsMatchIn(text) }
 
