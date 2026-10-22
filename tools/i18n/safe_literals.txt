@@ -934,6 +934,12 @@
 1	regex	app/src/main/java/tv/own/owntv/poterx/PoterxPrivacy.kt	(?i)[a-z][a-z0-9+.-]*://$h(?::\\d+)?
 1	regex	app/src/main/java/tv/own/owntv/poterx/PoterxPrivacy.kt	[^\\s"']*
 1	technical	app/src/main/java/tv/own/owntv/poterx/PoterxPrivacy.kt	•••
+6	empty	app/src/main/java/tv/own/owntv/poterx/PoterxReleaseNotes.kt	\0
+1	regex	app/src/main/java/tv/own/owntv/poterx/PoterxReleaseNotes.kt	$1
+1	regex	app/src/main/java/tv/own/owntv/poterx/PoterxReleaseNotes.kt	(?i)\\b[a-z][a-z0-9+.-]*://\\S+
+1	regex	app/src/main/java/tv/own/owntv/poterx/PoterxReleaseNotes.kt	(?i)\\s+by\\s+@\\S+\\s+in\\s*$
+1	regex	app/src/main/java/tv/own/owntv/poterx/PoterxReleaseNotes.kt	(?i)github|full changelog|what's changed|new contributors|^\\*\\*changelog\\*\\*
+1	regex	app/src/main/java/tv/own/owntv/poterx/PoterxReleaseNotes.kt	\\[([^\\]]*)]\\([^)]*\\)
 2	empty	app/src/main/java/tv/own/owntv/poterx/PoterxZapBanner.kt	\0
 1	file-path	app/src/main/java/tv/own/owntv/ui/components/BackgroundImageChooserDialog.kt	background_${System.currentTimeMillis()}.$ext
 1	file-path	app/src/main/java/tv/own/owntv/ui/components/BackgroundImageChooserDialog.kt	png

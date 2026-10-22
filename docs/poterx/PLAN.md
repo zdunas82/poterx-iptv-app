@@ -67,6 +67,9 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   z listy; baner z „od – do · pozostało”; karta „na żywo” w odtwarzaczu z tłem (czytelna na jasnym
   obrazie), chipy nie są ucinane w środku wartości, panel informacji szerszy; dymek synchronizacji
   nad podpowiedziami; przy wpisywaniu numeru widać nazwę kanału.
+- **v0.2.7** (w toku): karta aktualizacji bez adresów GitHuba w opisie wydania (linki i wiersze
+  „Full Changelog” wycinane w wersji zamkniętej); plan VPS pod aktualizacje (`VPS.md`); propozycja
+  Info bar 2 zapisana w planie.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.
@@ -87,7 +90,9 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 
 ## Procedura wydania (od testów u klientów, 2026‑10‑23)
 1. Nowy commit przechodzi CI (Android CI, gałąź `claude/android-tv-m3u-app-41s6di`).
-2. Wydanie na GitHubie z tagiem `vX.Y.Z` **z zaznaczonym „Set as a pre-release”**. Aplikacja
+2. Wydanie na GitHubie z tagiem `vX.Y.Z` **z zaznaczonym „Set as a pre-release”**. Opis wydania
+   po polsku, bez linków; nie klikać „Generate release notes” (wstawia adresy GitHuba — aplikacja
+   w wersji zamkniętej i tak je wycina, ale nie ma co ich tam dawać). Aplikacja
    pyta o `releases/latest`, a GitHub nie liczy tam pre-release — klienci nic nie widzą.
 3. Instalacja APK z pre-release na własnym Shieldzie/Streamerze, test według listy niżej.
 4. Po testach: edycja wydania, odznaczenie „pre-release” (ewentualnie „Set as the latest
@@ -101,7 +106,8 @@ serial, Ustawienia › Konto (status, ważność), O aplikacji (brak adresów), 
 poprzedniej wersji bez utraty danych.
 
 ## v0.3 — obsługa klientów na odległość
-- [ ] **Własny serwer aktualizacji** zamiast GitHub Releases (po stronie aplikacji ok. 1 dzień):
+- [ ] **Własny serwer aktualizacji** zamiast GitHub Releases — pełny plan w `docs/poterx/VPS.md`
+      (po stronie aplikacji ok. 1 dzień):
       - plik `https://<domena>/poterx/update.json` z polami `versionCode`, `versionName`,
         `apkUrl`, `sha256`, `notes` (PL), `minVersionCode` (wymuszona aktualizacja),
         `channel` (`test`/`stable` — kanał testowy dla własnych urządzeń);
@@ -114,6 +120,23 @@ poprzedniej wersji bez utraty danych.
 - [ ] Plik JSON na serwerze dostawcy: ogłoszenia, minimalna wersja (wymuszona aktualizacja),
       zapasowy adres serwera (ten sam `update.json`).
 - [ ] Wysyłka raportu błędu jednym przyciskiem.
+
+## Info bar 2 — propozycja (makieta: https://claude.ai/artifact/WFy91YgHj3ucnj39YZ7HnC)
+- Otwieranie: INFO, albo OK na pasku 1; zamykanie: INFO, Back, albo samo po 12 s (czas w
+  Ustawieniach: 8 / 12 / 20 s / aż zamknę). OK na gołym obrazie nadal daje sterowanie odtwarzacza.
+  Długie OK (dzisiejszy przewodnik kanału) wchodzi do Info bar 2 w trybie przeglądania programów.
+- Układ (dolne 40% ekranu, ciemna szyba): nagłówek (logo, numer, nazwa, plakietki: rozdzielczość
+  i kl/s, proporcje, silnik, „Archiwum 7 dni”, „Napisy”, ulubiony; zegar); TERAZ (tytuł,
+  „od – do · pozostało”, pasek postępu z godzinami, opis z EPG do 3 wierszy, ▼ rozwija);
+  PÓŹNIEJ (4 audycje); przyciski: Od początku, Przewodnik, Przypomnij, Nagraj, Dźwięk, Napisy,
+  Informacje, Ulubione.
+- Pilot: ◀ ▶ programy tego kanału w czasie (miniona → OK odtwarza z archiwum, przyszła →
+  Przypomnij / Nagraj); ▲ ▼ podgląd sąsiedniego kanału bez przełączania (numer na pomarańczowo,
+  OK przełącza, Back wraca); kolorowe klawisze: czerwony Nagraj, zielony Przypomnij, żółty Dźwięk,
+  niebieski Napisy.
+- Etapy: (1) plansza + przyciski + otwieranie i auto-ukrywanie, ~1 dzień; (2) ◀ ▶ z archiwum,
+  przypomnieniem i nagraniem, ~0,5–1 dnia; (3) ▲ ▼ i kolorowe klawisze, ~0,5 dnia.
+- Do decyzji: sposób otwierania, czy ▲ ▼ podgląda czy przełącza, czas znikania.
 
 ## v0.4 — tryb „Poterx klasyczny” (TiviMate)
 - [ ] OK na obrazie → lista kanałów nałożona na wideo (grupy, teraz/następnie, postęp),

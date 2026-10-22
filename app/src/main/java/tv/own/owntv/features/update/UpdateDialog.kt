@@ -90,14 +90,16 @@ fun UpdateDialog(onDismiss: () -> Unit, checkOnOpen: Boolean = false) {
             UpdateManager.State.UpToDate -> Text(stringResource(R.string.update_latest, manager.currentVersion), style = body, color = StageColors.Muted)
             is UpdateManager.State.Available -> {
                 Text(stringResource(R.string.update_available_version, s.info.version, manager.currentVersion), style = stageText(19, 600), color = StageColors.Text)
-                if (s.info.notes.isNotBlank()) {
+                // Poterx: a locked build shows the notes without links or the repository's name.
+                val notes = tv.own.owntv.poterx.PoterxReleaseNotes.clean(s.info.notes)
+                if (notes.isNotBlank()) {
                     Text(
                         stringResource(R.string.update_whats_new).uppercase(),
                         style = stageText(14, 800, 0.12.em), color = StageColors.Dim,
                         modifier = Modifier.padding(top = 22.mpx, bottom = 10.mpx),
                     )
                     Text(
-                        renderReleaseNotes(s.info.notes, headingColor = StageColors.Text),
+                        renderReleaseNotes(notes, headingColor = StageColors.Text),
                         style = stageText(17, 400).copy(lineHeight = (17 * 1.5f).mpxSp),
                         color = StageColors.Muted,
                         // The notes scroll; the buttons under them stay on screen.
