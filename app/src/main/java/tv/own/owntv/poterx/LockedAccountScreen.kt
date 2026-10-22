@@ -66,7 +66,7 @@ fun LockedAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             null, "", "active" -> stringResource(R.string.poterx_account_active)
             "expired" -> stringResource(R.string.poterx_account_expired)
             "banned", "disabled" -> stringResource(R.string.poterx_account_blocked)
-            else -> ok.status
+            else -> ok.status.orEmpty()
         }
         result is SourceTestResult.Expired -> stringResource(R.string.poterx_account_expired)
         result is SourceTestResult.AuthFailed -> stringResource(R.string.poterx_account_rejected)
