@@ -141,7 +141,7 @@ fun LiveEpgCard(
             Box(Modifier.height(34.dp).widthIn(min = 1.dp, max = 1.dp).background(hudInk.copy(alpha = 0.18f)))
         }
         epg.next?.let { entry ->
-            Column(Modifier.widthIn(max = 240.dp)) {
+            Column(Modifier.widthIn(min = 170.dp, max = 240.dp)) {
                 SlotLabel(stringResource(if (archive) R.string.content_archive_then else R.string.content_live_next), hudInk.copy(alpha = 0.45f))
                 Text(
                     entry.title,
@@ -220,6 +220,8 @@ private fun SlotLabel(text: String, color: Color) {
         text.uppercase(),
         style = tv.own.owntv.ui.theme.stageText(20, 500).copy(letterSpacing = 1.2.sp),
         color = color,
+        // Poterx: a long label ("NA ŻYWO PÓŹNIEJ") in a squeezed column broke into one letter per line.
+        maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(bottom = 1.dp),
     )

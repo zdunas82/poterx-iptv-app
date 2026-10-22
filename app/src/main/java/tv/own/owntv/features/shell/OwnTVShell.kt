@@ -515,6 +515,7 @@ fun OwnTVShell(
             tv.own.owntv.core.settings.StartupMode.HOME -> if (tv.own.owntv.poterx.LockedSource.enabled) {
                 onSelectSection(MainSection.LIVE_TV)
                 liveVm.select(tv.own.owntv.core.live.LiveKey.All)
+                liveVm.armPreview() // the in-pane preview plays from the start, not after the first focus
                 restoreFocus = true
             }
         }

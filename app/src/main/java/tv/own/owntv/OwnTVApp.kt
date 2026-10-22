@@ -145,7 +145,7 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         GlobalContext.get().let { koin ->
             tv.own.owntv.poterx.PoterxDefaults.ensureGuide(appScope, koin.get(), koin.get(), koin.get(), koin.get())
             // Poterx: weather and the Sports Hub's background work off until the user turns them on.
-            tv.own.owntv.poterx.PoterxDefaults.applyModules(this, appScope, koin.get(), koin.get())
+            tv.own.owntv.poterx.PoterxDefaults.applyModules(this, appScope, koin.get(), koin.get(), koin.get())
             // Poterx: the playlist carries this app's identity (User-Agent), also after an update.
             appScope.launch { runCatching { tv.own.owntv.poterx.PoterxAccount.ensureUserAgent(koin.get(), koin.get()) } }
             // Poterx: a Trending row whose first download failed gets another go.

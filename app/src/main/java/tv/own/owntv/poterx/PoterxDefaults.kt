@@ -72,7 +72,7 @@ object PoterxDefaults {
      * Runs on every start, so a profile created later (sign-in happens after the first start) gets
      * the same defaults the first time it is seen; each profile is marked once and then left alone.
      */
-    fun applyModules(context: Context, scope: CoroutineScope, settings: SettingsRepository, profileDao: ProfileDao) {
+    fun applyModules(context: Context, scope: CoroutineScope, settings: SettingsRepository, profileDao: ProfileDao, metadata: tv.own.owntv.core.metadata.MetadataRepository) {
         if (!LockedSource.enabled) return
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         scope.launch {
@@ -95,6 +95,12 @@ object PoterxDefaults {
                 if (!prefs.getBoolean(KEY_METADATA_LANG_DONE, false)) {
                     if (settings.metadataLanguage.first().isBlank()) settings.setMetadataLanguage(DEFAULT_LANGUAGE)
                     prefs.edit().putBoolean(KEY_METADATA_LANG_DONE, true).apply()
+                }
+                // Titles looked up while the shared metadata service refused us were remembered as
+                // "no match" for a week; forget those once, so they are searched again with the key.
+                if (!prefs.getBoolean(KEY_METADATA_HEAL_DONE, false)) {
+                    runCatching { metadata.clearCacheForLanguageChange() }
+                    prefs.edit().putBoolean(KEY_METADATA_HEAL_DONE, true).apply()
                 }
                 profileDao.getAllOnce().forEach { profile ->
                     val key = KEY_MODULES_PROFILE_PREFIX + profile.id
@@ -166,6 +172,7 @@ object PoterxDefaults {
     private const val KEY_MODULES_PROFILE_PREFIX = "modules_v1_profile_"
     private const val KEY_TMDB_APPLIED = "tmdb_key_v1"
     private const val KEY_METADATA_LANG_DONE = "metadata_lang_v1"
+    private const val KEY_METADATA_HEAL_DONE = "metadata_heal_v1"
     /** After the first screen and the guide check, never competing with them. */
     private const val TRENDING_START_DELAY_MS = 25_000L
     private const val DEFAULT_LANGUAGE = "pl"

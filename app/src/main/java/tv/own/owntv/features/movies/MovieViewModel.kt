@@ -537,7 +537,7 @@ class MovieViewModel(
             catalogPriority.clear()
         }
     }
-    fun setSearchQuery(query: String) { _search.value = query }
+    fun setSearchQuery(query: String) { if (query != _search.value) _selectedMovie.value = null; _search.value = query }
     fun onMovieFocused(movie: MovieEntity) { _selectedMovie.value = movie }
 
     /** Search's "Go to movie": the titles scroll to [reveal] and focus it, then call [revealDone]. */
@@ -582,18 +582,24 @@ class MovieViewModel(
      */
     fun ensureMovieMetaOnce(movie: MovieEntity) {
         if (!metaRetried.add(movie.id)) return
-        if (resolvedMeta[movie.id] != null) return
+        val have = resolvedMeta[movie.id]
+        if (have != null && !have.isIncomplete()) return
         viewModelScope.launch {
             val cache = runCatching { metadata.resolveMovie(movie) }.getOrNull()
-            if (cache != null) {
+            if (cache != null && !cache.isIncomplete()) {
                 resolvedMeta[movie.id] = cache
             } else {
+                // Nothing, or a row saved while the details call was failing: search afresh.
                 runCatching { metadata.clearMovie(movie) }
                 resolvedMeta.remove(movie.id)
             }
             _metaRefreshTick.value++
         }
     }
+
+    /** A cached row with neither backdrop nor cast was saved while the details call was failing. */
+    private fun tv.own.owntv.core.database.entity.MetadataCacheEntity.isIncomplete(): Boolean =
+        backdropPath.isNullOrBlank() && castJson.isNullOrBlank()
 
     fun refetchMovieMeta(movie: MovieEntity) {
         viewModelScope.launch {

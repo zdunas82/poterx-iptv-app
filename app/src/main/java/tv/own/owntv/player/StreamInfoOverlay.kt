@@ -51,7 +51,7 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
 
     Column(
         modifier = modifier
-            .widthIn(min = 300.dp, max = 460.dp)
+            .widthIn(min = 300.dp, max = 560.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(hudShade(0.78f))
             .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -69,7 +69,7 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
                     stringResource(row.label.titleRes),
                     style = tv.own.owntv.ui.theme.stageText(22, 400),
                     color = tv.own.owntv.ui.theme.StageColors.Muted,
-                    modifier = Modifier.weight(0.38f),
+                    modifier = Modifier.weight(0.42f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -78,7 +78,7 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
                     style = tv.own.owntv.ui.theme.stageText(22, 400),
                     color = hudInk,
                     fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.weight(0.62f),
+                    modifier = Modifier.weight(0.58f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )

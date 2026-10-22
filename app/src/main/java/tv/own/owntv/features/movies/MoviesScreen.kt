@@ -85,6 +85,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.draw.drawWithContent
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
@@ -205,6 +206,16 @@ fun MoviesScreen(
     val movieProgress by vm.movieProgress.collectAsStateWithLifecycle()
     val downloadStates by vm.downloadStates.collectAsStateWithLifecycle()
     val movies = vm.movies.collectAsLazyPagingItems()
+    // Poterx: the previous row's captions stayed in view under the toolbar while its posters were
+    // already cut; a short fade at the grid's top turns that into a scrolled edge.
+    val gridPage = tv.own.owntv.ui.theme.LocalStagePalette.current.page
+    val gridTopFade = Modifier.drawWithContent {
+        drawContent()
+        drawRect(
+            androidx.compose.ui.graphics.Brush.verticalGradient(0f to gridPage, 1f to gridPage.copy(alpha = 0f), endY = 56.mpx.toPx()),
+            size = androidx.compose.ui.geometry.Size(size.width, 56.mpx.toPx()),
+        )
+    }
     // Poterx: while a search is typed the header counts the results once they are all in, not the
     // whole category; the category count stood beside "A" as if the filter did nothing.
     val headerCount = if (searchQuery.isNotBlank()) {
@@ -498,7 +509,7 @@ fun MoviesScreen(
         if (rememberMovies) perCategoryMovieIds[selectedKey] = movie.id
     }
     val posterOf: (MovieEntity) -> String? = { it.posterUrl?.takeIf { u -> u.isNotBlank() } ?: cachedPosters[it.id] }
-    val playHint = stringResource(R.string.common_ok) to stringResource(R.string.content_play)
+    val playHint = stringResource(R.string.common_ok) to stringResource(if (tv.own.owntv.poterx.LockedSource.enabled) R.string.poterx_key_open else R.string.content_play)
     val optionsHint = stringResource(R.string.content_key_hold_ok) to stringResource(R.string.content_key_options)
 
     // The toolbar and the titles: one focus group, entered on a title, never the search field.
@@ -627,7 +638,7 @@ fun MoviesScreen(
                                 horizontalArrangement = Arrangement.spacedBy(26.mpx),
                                 verticalArrangement = Arrangement.spacedBy(30.mpx),
                                 contentPadding = PaddingValues(start = fx(84), end = fx(64), top = 14.mpx, bottom = glowRoom),
-                                modifier = Modifier.fillMaxWidth().weight(1f),
+                                modifier = Modifier.fillMaxWidth().weight(1f).then(gridTopFade),
                             ) {
                                 items(count = movies.itemCount, key = movies.itemKey { it.id }, contentType = movies.itemContentType { "movie" }) { index ->
                                     val movie = movies[index] ?: return@items
@@ -1048,7 +1059,7 @@ fun MoviesScreen(
         val actions = if (!tv.own.owntv.poterx.LockedSource.enabled) emptyList() else buildList {
             add(tv.own.owntv.features.shell.components.MediaDetailsAction(stringResource(R.string.content_play), OwnTVIcon.PLAY, tinted = true) { detailsMovie = null; startMovie(m) })
             val key = if (metadataMode.enrich) cache?.trailerKey else null
-            if (key != null) add(tv.own.owntv.features.shell.components.MediaDetailsAction(stringResource(R.string.content_play_trailer), OwnTVIcon.VIDEO) { detailsMovie = null; trailerTitle = m.name; trailerVideoKey = key })
+            if (key != null) add(tv.own.owntv.features.shell.components.MediaDetailsAction(stringResource(R.string.content_play_trailer), OwnTVIcon.VIDEO) { trailerTitle = m.name; trailerVideoKey = key })
             val fav = favoriteIds.contains(m.id)
             add(tv.own.owntv.features.shell.components.MediaDetailsAction(stringResource(if (fav) R.string.content_remove_favourite else R.string.content_add_favourite), OwnTVIcon.FAVORITE) { vm.toggleFavorite(m) })
             if (cache == null && metadataMode.enrich) add(tv.own.owntv.features.shell.components.MediaDetailsAction(stringResource(R.string.content_refetch_tmdb), OwnTVIcon.REFRESH) { toast.show(refetchingTmdbMessage); vm.refetchMovieMeta(m) })
@@ -1057,6 +1068,8 @@ fun MoviesScreen(
             details = buildMovieDetails(m, cache, metadataMode.tmdbWins),
             onExit = { detailsMovie = null },
             actions = actions,
+            // Focus comes back to the page's buttons when the trailer closes over it.
+            refocusKey = trailerVideoKey == null,
         )
     }
 

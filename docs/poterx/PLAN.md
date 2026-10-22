@@ -46,6 +46,13 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   wyszukiwania, data pod zegarem jaśniejsza, podgląd TV gra dalej przy przeglądaniu kategorii.
   OK na plakacie filmu otwiera stronę tytułu (opis, obsada, przyciski Odtwórz, Zwiastun,
   Ulubione, Pobierz szczegóły); film startuje dopiero z „Odtwórz”.
+- **v0.2.3** (w toku, po audycie v0.2.2): etykiety karty archiwum bez łamania liter, szerszy panel
+  informacji o strumieniu; stare wpisy TMDB z czasu awarii usługi czyszczone raz przy aktualizacji,
+  a niepełne (bez tła i obsady) pobierane ponownie; wygaszenie górnej krawędzi siatki filmów;
+  podpowiedź „OK Otwórz”; strona filmu otwiera się od góry, zwiastun wraca na stronę filmu; podgląd
+  TV uzbrojony od startu; wyszukiwarka filmów nie pokazuje w banerze tytułu spoza wyników; opis na
+  Home z playlisty (po polsku) przed angielskim z TMDB; zapping strzałkami po całej liście w
+  kolejności numerów (decyzja: jak w dekoderze).
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.

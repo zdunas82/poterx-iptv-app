@@ -916,6 +916,9 @@ class LiveViewModel(
         _search.value = query
     }
 
+    /** Poterx: the in-pane preview may play before any channel was focused (start on Live TV). */
+    fun armPreview() { _previewArmed.value = true }
+
     fun onChannelFocused(channel: ChannelEntity) {
         _previewArmed.value = true // a real user focus — the in-pane preview may now play
         _previewChannel.value = channel
@@ -1044,6 +1047,16 @@ class LiveViewModel(
         loadWindowAround = ::buildZapList,
         categoryName = { id -> categoryDao.getById(id)?.name },
     )
+    /**
+     * Poterx: a channel opened with no browse list behind it (the last channel at start, the guide,
+     * a number typed on the remote) zaps through the whole list in number order on a locked build,
+     * the way a set-top box does; stock builds keep the channel's own category.
+     */
+    private fun armZapFor(channel: ChannelEntity) {
+        if (tv.own.owntv.poterx.LockedSource.enabled) zapList.armForKey(LiveKey.All, null, { channelsInRail(LiveKey.All) }) {}
+        else zapList.armFor(channel)
+    }
+
     val canZap: StateFlow<Boolean> = zapList.canZap
     val zapChannels: StateFlow<List<ChannelEntity>> = zapList.channels
     val zapListTitle: StateFlow<String?> = zapList.title
@@ -1234,7 +1247,7 @@ class LiveViewModel(
         // a zap list, CH+/CH− and the channel-list button are dead for the rest of the session, so rebuild
         // the channel's own category the way the Guide/Search path does.
         if (list.none { it.id == channel.id }) {
-            zapList.armFor(channel)
+            armZapFor(channel)
             ensurePlaying(channel)
             return
         }
@@ -1259,7 +1272,7 @@ class LiveViewModel(
      *  ExoPlayer→mpv ladder, compatibility-mode pins, learned stream quirks, the per-playlist
      *  pre-buffer and the external-player toggle apply however the channel was found. */
     fun watchFromGuide(channel: ChannelEntity) {
-        zapList.armFor(channel)
+        armZapFor(channel)
         ensurePlaying(channel)
         recordLiveHistory(channel, immediate = true)
     }
@@ -1574,7 +1587,7 @@ class LiveViewModel(
         viewModelScope.launch {
             val channel = withContext(Dispatchers.IO) { channelDao.getById(previous.id) } ?: return@launch
             if (channel.sourceId !in ctx.value.sourceIds) return@launch
-            zapList.armFor(channel)
+            armZapFor(channel)
             ensurePlaying(custom.value.itemNames[CustomizeKeys.channel(channel)]?.let { channel.copy(name = it) } ?: channel)
         }
     }
@@ -1585,7 +1598,7 @@ class LiveViewModel(
         val channel = channelDao.getById(channelId) ?: return false
         if (zapChannels.isEmpty()) {
             // A single Home "continue watching" tile has no browse rail of its own.
-            zapList.armFor(channel)
+            armZapFor(channel)
         } else {
             zapList.armFromBrowse(zapChannels, title = null, key = null, categoryId = null)
         }

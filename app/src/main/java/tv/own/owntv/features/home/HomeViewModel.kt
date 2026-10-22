@@ -440,10 +440,15 @@ class HomeViewModel(
 
     private suspend fun heroMetadata(item: HeroItem): HomeHeroMetadata? = when (item) {
         is HeroItem.MovieHero -> metadata.resolveMovie(item.movie)?.let { cache ->
+            // Poterx: the provider's plot (the playlist's language) comes first unless TMDB wins; TMDB
+            // answers in English for a title it has no translation of.
+            val tmdbWins = settings.metadataConfig().mode.tmdbWins
+            val tmdbPlot = cache.overview?.takeIf { it.isNotBlank() }
+            val providerPlot = item.movie.plot?.takeIf { it.isNotBlank() }
             HomeHeroMetadata(
                 backdropUrl = MetadataImages.backdrop(cache.backdropPath, size = "w1280"),
                 logoUrl = MetadataImages.logo(cache.logoPath),
-                plot = cache.overview?.takeIf { it.isNotBlank() },
+                plot = if (tmdbWins) tmdbPlot ?: providerPlot else providerPlot ?: tmdbPlot,
             )
         }
         is HeroItem.SeriesHero -> {
@@ -454,7 +459,11 @@ class HomeViewModel(
                     backdropUrl = MetadataImages.backdrop(show?.backdropPath, size = "w1280")
                         ?: MetadataImages.backdrop(episode?.backdropPath ?: episode?.posterPath, size = "w1280"),
                     logoUrl = MetadataImages.logo(show?.logoPath),
-                    plot = show?.overview?.takeIf { it.isNotBlank() } ?: episode?.overview?.takeIf { it.isNotBlank() },
+                    plot = run {
+                        val tmdbPlot = show?.overview?.takeIf { it.isNotBlank() } ?: episode?.overview?.takeIf { it.isNotBlank() }
+                        val providerPlot = item.series.plot?.takeIf { it.isNotBlank() }
+                        if (settings.metadataConfig().mode.tmdbWins) tmdbPlot ?: providerPlot else providerPlot ?: tmdbPlot
+                    },
                 )
                 else -> null
             }

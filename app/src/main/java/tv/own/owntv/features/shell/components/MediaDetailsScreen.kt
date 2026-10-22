@@ -95,6 +95,8 @@ fun MediaDetailsScreen(
     // button, ◀ ▶ move between them, OK presses, Up/Down still scroll (the buttons leave those keys
     // to the page), Back exits. Without actions it stays the read-only page it was.
     actions: List<MediaDetailsAction> = emptyList(),
+    /** Poterx: any change re-requests focus (a popup that opened over the page has closed). */
+    refocusKey: Any? = Unit,
 ) {
     val scroll = rememberScrollState()
     val focus = remember { FocusRequester() }
@@ -117,7 +119,12 @@ fun MediaDetailsScreen(
     }
     val page = stageTone(Color(0xFF070B0E), LocalStagePalette.current.page)
     tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = onExit, stageLayout = true, stageScaled = false) {
-        LaunchedEffect(Unit) { kotlinx.coroutines.delay(60); runCatching { (if (actions.isEmpty()) focus else firstAction).requestFocus() } }
+        LaunchedEffect(refocusKey) {
+            kotlinx.coroutines.delay(60)
+            runCatching { (if (actions.isEmpty()) focus else firstAction).requestFocus() }
+            // A focused button asks to be brought into view, which could scroll the poster off the top.
+            scroll.scrollTo(0)
+        }
         Box(modifier.fillMaxSize().background(page).trapAllFocusExit()) {
             if (!details.backdropUrl.isNullOrBlank()) {
                 AsyncImage(
