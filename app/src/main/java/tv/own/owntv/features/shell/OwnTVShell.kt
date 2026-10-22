@@ -516,6 +516,7 @@ fun OwnTVShell(
                 onSelectSection(MainSection.LIVE_TV)
                 liveVm.select(tv.own.owntv.core.live.LiveKey.All)
                 liveVm.armPreview() // the in-pane preview plays from the start, not after the first focus
+                liveVm.previewLastChannel()
                 restoreFocus = true
             }
         }

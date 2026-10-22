@@ -75,7 +75,7 @@ fun LiveEpgCard(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         epg.now?.let { entry ->
-            Column(Modifier.widthIn(max = 300.dp)) {
+            Column(Modifier.widthIn(max = 250.dp)) {
                 SlotLabel(stringResource(if (archive) R.string.content_archive_playing else R.string.content_live_now), tv.own.owntv.ui.theme.stageAccent.accent)
                 Text(
                     entry.title,
@@ -88,9 +88,10 @@ fun LiveEpgCard(
                 val remaining = ((entry.stopMs - nowMs) / 60_000L).toInt()
                 Text(
                     if (remaining in 1..600) {
+                        // Poterx: the whole range before the minutes left; an end time alone read as a start time.
                         stringResource(
                             R.string.content_live_time_remaining,
-                            formatTime(entry.stopMs),
+                            stringResource(R.string.content_live_time_range, formatTime(entry.startMs), formatTime(entry.stopMs)),
                             remaining,
                         )
                     } else {
@@ -141,7 +142,7 @@ fun LiveEpgCard(
             Box(Modifier.height(34.dp).widthIn(min = 1.dp, max = 1.dp).background(hudInk.copy(alpha = 0.18f)))
         }
         epg.next?.let { entry ->
-            Column(Modifier.widthIn(min = 170.dp, max = 240.dp)) {
+            Column(Modifier.widthIn(min = 150.dp, max = 200.dp)) {
                 SlotLabel(stringResource(if (archive) R.string.content_archive_then else R.string.content_live_next), hudInk.copy(alpha = 0.45f))
                 Text(
                     entry.title,

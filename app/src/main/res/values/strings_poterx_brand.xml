@@ -76,4 +76,5 @@
     <string name="settings_language_contribution_description">Scan the QR code or open the link to choose any available language and contribute to the translation project.</string>
     <string name="settings_language_contribution_qr_description">QR code for the translation project overview</string>
     <string name="settings_catchup_player">Play catch-up in</string>
+    <string name="content_live_next">Next</string>
 </resources>

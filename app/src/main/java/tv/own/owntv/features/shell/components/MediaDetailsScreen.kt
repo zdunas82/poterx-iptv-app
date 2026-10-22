@@ -86,6 +86,7 @@ data class MediaDetailsAction(
     val onClick: () -> Unit,
 )
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun MediaDetailsScreen(
     details: MediaDetailsUi,
@@ -136,6 +137,9 @@ fun MediaDetailsScreen(
             Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(page.copy(alpha = 0.35f)))
             Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).gradientWash(vertical = true, 0.2f to Color.Transparent, 0.8f to page))
             Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).gradientWash(vertical = false, 0f to page.copy(alpha = 0.85f), 0.6f to Color.Transparent))
+            // Poterx: a focused button must not scroll the page (it pushed the poster off the top);
+            // Up/Down scroll it by hand, as before.
+            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.foundation.gestures.LocalBringIntoViewSpec provides noAutoScroll) {
             Column(
                 Modifier.fillMaxSize().focusRequester(focus).onKeyEvent(onKey).focusable().verticalScroll(scroll)
                     .padding(start = 120.mpx, end = 120.mpx, top = 300.mpx, bottom = 80.mpx),
@@ -182,8 +186,15 @@ fun MediaDetailsScreen(
                 }
                 Text(stringResource(R.string.content_media_press_back), style = stageText(16, 600), color = StageColors.Dim, modifier = Modifier.padding(top = 40.mpx))
             }
+            }
         }
     }
+}
+
+/** Focus changes never scroll the details page on their own. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+private val noAutoScroll = object : androidx.compose.foundation.gestures.BringIntoViewSpec {
+    override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float = 0f
 }
 
 /** A section label on the details page ("OVERVIEW", "CAST"): 15/800 caps, dim. */

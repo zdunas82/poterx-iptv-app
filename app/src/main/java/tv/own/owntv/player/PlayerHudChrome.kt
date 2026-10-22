@@ -111,7 +111,7 @@ internal fun TopBar(
                     }
                     parts.forEachIndexed { i, label ->
                         if (i > 0) Box(Modifier.size(3.dp).clip(CircleShape).background(hudInk.copy(alpha = 0.3f)))
-                        Text(label, style = tv.own.owntv.ui.theme.stageText(22, 700), color = hudInk.copy(alpha = 0.5f))
+                        Text(label, style = tv.own.owntv.ui.theme.stageText(22, 700), color = hudInk.copy(alpha = 0.5f), maxLines = 1, softWrap = false, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
                     // The LIVE badge has left the top bar: live status belongs beside the timeline that
                     // describes it, so it is now the stateful badge at the right end of the dock's band A.

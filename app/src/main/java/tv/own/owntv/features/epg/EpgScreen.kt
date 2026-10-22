@@ -824,7 +824,17 @@ private fun GuideRow(
                         Key.Menu -> { if (down) onMenu(programmeAt(progs, cursorTime)); true }
                         // Physical by design: the timeline runs left to right in every language.
                         // Row stage: ◀ leaves for the menu, ▶ steps into the programmes.
-                        Key.DirectionLeft -> if (!cellMode) false else {
+                        Key.DirectionLeft -> if (!cellMode) {
+                            // Poterx: ◀ on the row steps into the past (the archive) instead of leaving for
+                            // the menu; Back still returns to the rail.
+                            if (!tv.own.owntv.poterx.LockedSource.enabled) false else {
+                                if (down) {
+                                    onEnterCell()
+                                    onCursor(cursorStep(progs, System.currentTimeMillis(), -1, windowStart, windowEnd))
+                                }
+                                true
+                            }
+                        } else {
                             if (down) onCursor(cursorStep(progs, cursorTime, -1, windowStart, windowEnd))
                             true
                         }

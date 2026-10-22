@@ -919,6 +919,18 @@ class LiveViewModel(
     /** Poterx: the in-pane preview may play before any channel was focused (start on Live TV). */
     fun armPreview() { _previewArmed.value = true }
 
+    /** Poterx: the last channel watched becomes the preview at start, so the pane is not black
+     *  until the first row is focused (the stock restore runs only with "remember last channel"). */
+    fun previewLastChannel() {
+        viewModelScope.launch {
+            if (_previewChannel.value != null) return@launch
+            val savedId = settings.lastLiveChannelId.first()
+            if (savedId <= 0) return@launch
+            ctx.first { it.profileId >= 0 }
+            channelDao.getById(savedId)?.let { if (_previewChannel.value == null) _previewChannel.value = it }
+        }
+    }
+
     fun onChannelFocused(channel: ChannelEntity) {
         _previewArmed.value = true // a real user focus — the in-pane preview may now play
         _previewChannel.value = channel
@@ -1044,7 +1056,9 @@ class LiveViewModel(
         playingChannelId = { _previewChannel.value?.id },
         loadForChannel = ::channelsAroundChannel,
         loadForCategory = ::channelsInCategory,
-        loadWindowAround = ::buildZapList,
+        // Poterx: a number typed on the remote rebuilds the list as the whole channel list, not a
+        // window of the tuned channel's category (580 then CH+ went to #27 of another category).
+        loadWindowAround = { ch -> if (tv.own.owntv.poterx.LockedSource.enabled) channelsInRail(LiveKey.All) else buildZapList(ch) },
         categoryName = { id -> categoryDao.getById(id)?.name },
     )
     /**
@@ -1252,6 +1266,17 @@ class LiveViewModel(
             return
         }
         val key = _selected.value
+        if (tv.own.owntv.poterx.LockedSource.enabled) {
+            // Poterx: the browse list handed in is only the pages the screen has loaded (120 rows), so
+            // zapping wrapped at the end of a page; load the rail's whole list by its key instead.
+            when (key) {
+                is LiveKey.Folder -> zapList.armForCategory(key.id) {}
+                is LiveKey.Custom -> zapList.armForKey(key, railItems.value.firstOrNull { it.key == key }?.title, { channelsInCustom(key) }) {}
+                else -> zapList.armForKey(key, null, { channelsInRail(key) }) {}
+            }
+            ensurePlaying(channel)
+            return
+        }
         zapList.armFromBrowse(
             channels = list,
             title = railItems.value.firstOrNull { it.key == key }?.title,

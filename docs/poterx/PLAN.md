@@ -53,6 +53,11 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   TV uzbrojony od startu; wyszukiwarka filmów nie pokazuje w banerze tytułu spoza wyników; opis na
   Home z playlisty (po polsku) przed angielskim z TMDB; zapping strzałkami po całej liście w
   kolejności numerów (decyzja: jak w dekoderze).
+- **v0.2.4** (w toku, po audycie v0.2.3): zapping po całej liście także z listy (nie tylko z
+  wczytanej strony 120 pozycji) i po wpisaniu numeru; podgląd TV ma kanał od startu (ostatni
+  oglądany); ◀ na wierszu przewodnika cofa w czasie zamiast wychodzić do menu; karta w odtwarzaczu
+  mieści się w prawej połowie („16:25 – 17:05 · pozostało 25 min”, etykieta „Później”, chipy bez
+  łamania); strona filmu nie przesuwa się przy fokusie na przyciskach.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.
