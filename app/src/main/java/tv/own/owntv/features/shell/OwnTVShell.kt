@@ -452,75 +452,6 @@ fun OwnTVShell(
     // The single most-recent resumable item, surfaced as a shared top-bar "Continue" chip.
     val continueTarget by homeVm.continueTarget.collectAsStateWithLifecycle()
 
-    // Per-profile startup action runs once when the authenticated shell first appears. With one unlocked
-    // profile that is immediately; profile/PIN gates keep the shell out of composition until authorized.
-    val resumeSettings = koinInject<tv.own.owntv.core.settings.SettingsRepository>()
-    val startupChannelUnavailable = androidx.compose.ui.res.stringResource(tv.own.owntv.R.string.settings_startup_channel_unavailable)
-    LaunchedEffect(Unit) {
-        if (playerMode != PlayerMode.NONE) return@LaunchedEffect
-        val pid = resumeSettings.activeProfileId.first()
-        when (resumeSettings.startupMode(pid).first()) {
-            tv.own.owntv.core.settings.StartupMode.LAST_CHANNEL -> {
-                val ch = liveVm.lastWatchedLiveChannel()
-                if (ch != null && playerMode == PlayerMode.NONE) {
-                    zapSource = MainSection.LIVE_TV
-                    // There is no caller-owned browse rail here. Let LiveViewModel build the channel's
-                    // provider context instead of permanently arming a one-item list that disables CH+/CH-.
-                    liveVm.watchFullscreen(ch, emptyList())
-                    playerMode = PlayerMode.FULLSCREEN
-                }
-            }
-            // Open straight to Live TV on the Favorites folder, with focus landing inside the channel list
-            // (restoreFocus drives LiveScreen to focus the first/last channel, not the nav panel).
-            tv.own.owntv.core.settings.StartupMode.FAVORITES -> {
-                onSelectSection(MainSection.LIVE_TV)
-                liveVm.select(tv.own.owntv.core.live.LiveKey.Favorites)
-                restoreFocus = true
-            }
-            tv.own.owntv.core.settings.StartupMode.SPECIFIC_CHANNEL -> {
-                val ref = resumeSettings.startupChannel(pid).first()
-                var launch: LauncherLaunch? = null
-                if (ref != null) {
-                    if (!ref.remoteId.isNullOrBlank()) {
-                        launch = launcherIntegrationRepository.resolveLaunch(
-                            pid,
-                            LauncherDeepLink.Live(sourceId = ref.sourceId, remoteId = ref.remoteId),
-                        )
-                    }
-                    if (launch == null) {
-                        launch = launcherIntegrationRepository.resolveLaunch(
-                            pid,
-                            LauncherDeepLink.Live(sourceId = ref.sourceId, name = ref.name),
-                        )
-                    }
-                    if (launch == null && ref.itemId > 0L) {
-                        launch = launcherIntegrationRepository.resolveLaunch(
-                            pid,
-                            LauncherDeepLink.Live(sourceId = ref.sourceId, itemId = ref.itemId),
-                        )
-                    }
-                }
-                val channel = (launch as? LauncherLaunch.Live)?.channel
-                if (channel != null && liveVm.isVisibleToActiveProfile(channel) && playerMode == PlayerMode.NONE) {
-                    zapSource = MainSection.LIVE_TV
-                    liveVm.watchFullscreen(channel, emptyList())
-                    playerMode = PlayerMode.FULLSCREEN
-                } else {
-                    onSelectSection(MainSection.HOME)
-                    localSubToast.show(startupChannelUnavailable)
-                }
-            }
-            // Poterx: "Home" on a locked build is Live TV with every channel listed, focus in the list.
-            tv.own.owntv.core.settings.StartupMode.HOME -> if (tv.own.owntv.poterx.LockedSource.enabled) {
-                onSelectSection(MainSection.LIVE_TV)
-                liveVm.select(tv.own.owntv.core.live.LiveKey.All)
-                liveVm.armPreview() // the in-pane preview plays from the start, not after the first focus
-                liveVm.previewLastChannel()
-                restoreFocus = true
-            }
-        }
-    }
-
     // Movies/Series/Live load on first open via their reactive Paging flows — their indexed first page is
     // cheap, so they need NO preloading (a Live-TV-only user pays nothing for them). The TV Guide is the ONE
     // exception: load() pulls every guide channel + a programme window, which is heavy enough that doing it on
@@ -557,6 +488,114 @@ fun OwnTVShell(
     val resumeVideo = {
         player.exitAudioOnly()
         runCatching { liveVm.previewEngine.exitAudioOnly() }
+    }
+
+    /**
+     * Poterx: a channel opened full screen with no player on screen yet — the startup channel, the last
+     * channel at start, a launcher deep link — goes the way an OK on the Live list goes: previewed in the
+     * pane first, promoted once its picture is up.
+     *
+     * Tuned straight into full screen, the live engine starts before the screen has a video surface. Its
+     * video decoder only ever starts on a real surface (OnSurfaceVideoRenderer), and when the full-screen
+     * surface arrives a moment later the decoder still never starts (measured on the Shield: sound, a
+     * black picture and the "Audio only" plate until the next channel change). The pane's surface exists
+     * before the preview tunes, and a decoder already running is moved to the full-screen surface on
+     * promotion — the path every OK on the list takes. A pane that shows no picture in time (preview off,
+     * a slow panel) is promoted anyway, which is what happened before.
+     */
+    suspend fun openChannelAtStart(channel: ChannelEntity) {
+        onSelectSection(MainSection.LIVE_TV)
+        liveVm.select(LiveKey.All)
+        liveVm.onChannelFocused(channel) // arms the pane and makes this channel its preview
+        val engine = liveVm.previewEngine
+        kotlinx.coroutines.withTimeoutOrNull(tv.own.owntv.poterx.POTERX_START_PREVIEW_WAIT_MS) {
+            // The preview's own tune: its load resets the size, so a stale one from an earlier channel
+            // (a deep link into a running app) cannot pass for this channel's first frame.
+            engine.state.first { it == tv.own.owntv.player.LivePreviewEngine.State.LOADING }
+            engine.videoSize.first { it != null }
+        }
+        if (playerMode != PlayerMode.NONE) return
+        // There is no caller-owned browse rail here. Let LiveViewModel build the channel's provider
+        // context instead of permanently arming a one-item list that disables CH+/CH-.
+        liveVm.watchFullscreen(channel, emptyList())
+        openFullscreen(MainSection.LIVE_TV)
+    }
+
+    // Per-profile startup action runs once when the authenticated shell first appears. With one unlocked
+    // profile that is immediately; profile/PIN gates keep the shell out of composition until authorized.
+    val resumeSettings = koinInject<tv.own.owntv.core.settings.SettingsRepository>()
+    val startupChannelUnavailable = androidx.compose.ui.res.stringResource(tv.own.owntv.R.string.settings_startup_channel_unavailable)
+    LaunchedEffect(Unit) {
+        if (playerMode != PlayerMode.NONE) return@LaunchedEffect
+        val pid = resumeSettings.activeProfileId.first()
+        when (resumeSettings.startupMode(pid).first()) {
+            tv.own.owntv.core.settings.StartupMode.LAST_CHANNEL -> {
+                val ch = liveVm.lastWatchedLiveChannel()
+                if (ch != null && playerMode == PlayerMode.NONE) {
+                    if (tv.own.owntv.poterx.LockedSource.enabled) {
+                        openChannelAtStart(ch)
+                    } else {
+                        zapSource = MainSection.LIVE_TV
+                        // There is no caller-owned browse rail here. Let LiveViewModel build the channel's
+                        // provider context instead of permanently arming a one-item list that disables CH+/CH-.
+                        liveVm.watchFullscreen(ch, emptyList())
+                        playerMode = PlayerMode.FULLSCREEN
+                    }
+                }
+            }
+            // Open straight to Live TV on the Favorites folder, with focus landing inside the channel list
+            // (restoreFocus drives LiveScreen to focus the first/last channel, not the nav panel).
+            tv.own.owntv.core.settings.StartupMode.FAVORITES -> {
+                onSelectSection(MainSection.LIVE_TV)
+                liveVm.select(tv.own.owntv.core.live.LiveKey.Favorites)
+                restoreFocus = true
+            }
+            tv.own.owntv.core.settings.StartupMode.SPECIFIC_CHANNEL -> {
+                val ref = resumeSettings.startupChannel(pid).first()
+                var launch: LauncherLaunch? = null
+                if (ref != null) {
+                    if (!ref.remoteId.isNullOrBlank()) {
+                        launch = launcherIntegrationRepository.resolveLaunch(
+                            pid,
+                            LauncherDeepLink.Live(sourceId = ref.sourceId, remoteId = ref.remoteId),
+                        )
+                    }
+                    if (launch == null) {
+                        launch = launcherIntegrationRepository.resolveLaunch(
+                            pid,
+                            LauncherDeepLink.Live(sourceId = ref.sourceId, name = ref.name),
+                        )
+                    }
+                    if (launch == null && ref.itemId > 0L) {
+                        launch = launcherIntegrationRepository.resolveLaunch(
+                            pid,
+                            LauncherDeepLink.Live(sourceId = ref.sourceId, itemId = ref.itemId),
+                        )
+                    }
+                }
+                val channel = (launch as? LauncherLaunch.Live)?.channel
+                if (channel != null && liveVm.isVisibleToActiveProfile(channel) && playerMode == PlayerMode.NONE) {
+                    if (tv.own.owntv.poterx.LockedSource.enabled) {
+                        openChannelAtStart(channel)
+                    } else {
+                        zapSource = MainSection.LIVE_TV
+                        liveVm.watchFullscreen(channel, emptyList())
+                        playerMode = PlayerMode.FULLSCREEN
+                    }
+                } else {
+                    onSelectSection(MainSection.HOME)
+                    localSubToast.show(startupChannelUnavailable)
+                }
+            }
+            // Poterx: "Home" on a locked build is Live TV with every channel listed, focus in the list.
+            tv.own.owntv.core.settings.StartupMode.HOME -> if (tv.own.owntv.poterx.LockedSource.enabled) {
+                onSelectSection(MainSection.LIVE_TV)
+                liveVm.select(tv.own.owntv.core.live.LiveKey.All)
+                liveVm.armPreview() // the in-pane preview plays from the start, not after the first focus
+                liveVm.previewLastChannel()
+                restoreFocus = true
+            }
+        }
     }
     // The mini-player's own expand button always maximizes.
     val expandPlayer = { resumeVideo(); restoreFocus = false; playerMode = PlayerMode.FULLSCREEN }
@@ -834,10 +873,15 @@ fun OwnTVShell(
                 }
                 is LauncherLaunch.Live -> {
                     onSelectSection(MainSection.LIVE_TV)
-                    // A launcher tile has no browse rail, so arm the channel's provider context before
-                    // opening the player. A bare ensurePlaying() leaves CH+/CH- with no list to step through.
-                    liveVm.watchFullscreen(launch.channel, emptyList())
-                    openFullscreen(MainSection.LIVE_TV)
+                    if (tv.own.owntv.poterx.LockedSource.enabled) {
+                        // Poterx: the same black-picture start as the startup channel, see openChannelAtStart.
+                        openChannelAtStart(launch.channel)
+                    } else {
+                        // A launcher tile has no browse rail, so arm the channel's provider context before
+                        // opening the player. A bare ensurePlaying() leaves CH+/CH- with no list to step through.
+                        liveVm.watchFullscreen(launch.channel, emptyList())
+                        openFullscreen(MainSection.LIVE_TV)
+                    }
                     onDeepLinkConsumed()
                 }
                 is LauncherLaunch.Series -> {
