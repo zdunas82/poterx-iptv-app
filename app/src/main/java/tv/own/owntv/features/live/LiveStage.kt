@@ -381,6 +381,16 @@ private fun LiveScheduleItem(p: XtEpgEntry, accentTime: Boolean, onClick: () -> 
 
 /** Scroll only as far as the focused item, plus one row of room, needs (the TV default pins it a third down). */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+/**
+ * Poterx: the poster grids. A row that leaves the viewport is brought back flush with the top edge,
+ * so the row above it scrolls out entirely — with [edgeScrollSpec]'s "one row of room" the previous
+ * row's captions stayed in view under the toolbar, dimmed by the fade but still readable.
+ */
+internal val rowAlignScrollSpec = object : androidx.compose.foundation.gestures.BringIntoViewSpec {
+    override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float =
+        if (offset < 0f || offset + size > containerSize) offset else 0f
+}
+
 internal val edgeScrollSpec = object : androidx.compose.foundation.gestures.BringIntoViewSpec {
     override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float {
         // One row of room kept ahead of the highlight, so the next row is already laid out: a held

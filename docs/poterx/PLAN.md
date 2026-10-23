@@ -70,6 +70,9 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 - **v0.2.7** (w toku): karta aktualizacji bez adresów GitHuba w opisie wydania (linki i wiersze
   „Full Changelog” wycinane w wersji zamkniętej); plan VPS pod aktualizacje (`VPS.md`); propozycja
   Info bar 2 zapisana w planie.
+- **v0.3.1** (w toku, po audycie v0.3.0): siatki filmów i seriali dosuwają rząd do górnej krawędzi,
+  więc podpisy poprzedniego rzędu nie zostają pod paskiem; na stronie serialu ustępuje przycisk
+  odtwarzania, nie „Pobierz sezon”.
 - **v0.3.0** (2026‑10‑23, tag 40e1015, na kanale testowym): własny serwer aktualizacji (`POTERX_UPDATE_URL`, `PoterxUpdater`: `update.json`,
   SHA‑256, `minVersionCode` → karta „Wymagana aktualizacja”); kanał testowy za PIN‑em w Ustawieniach ›
   Konto; CI po tagu wgrywa APK, changelog i `update-test.json` na VPS (`rsync`), opis wydania z

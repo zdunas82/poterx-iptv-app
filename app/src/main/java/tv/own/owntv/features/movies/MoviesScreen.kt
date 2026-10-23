@@ -15,6 +15,7 @@ import androidx.compose.ui.layout.layout
 import tv.own.owntv.features.live.LiveCategories
 import tv.own.owntv.core.live.ProviderTags
 import tv.own.owntv.features.live.edgeScrollSpec
+import tv.own.owntv.features.live.rowAlignScrollSpec
 import tv.own.owntv.features.shell.components.VodCinematicBackdrop
 import tv.own.owntv.features.shell.components.VodDetailsCard
 import tv.own.owntv.features.shell.components.VodGroupDetails
@@ -631,7 +632,7 @@ fun MoviesScreen(
                         // A fixed gap under the toolbar that scrolling posters never enter; the grid's own
                         // top padding is only the room the focused poster's lift and ring need.
                         Spacer(Modifier.height(14.mpx))
-                        CompositionLocalProvider(LocalBringIntoViewSpec provides edgeScrollSpec) {
+                        CompositionLocalProvider(LocalBringIntoViewSpec provides rowAlignScrollSpec) {
                             LazyVerticalGrid(
                                 state = effectiveGridState,
                                 columns = GridCells.Fixed(columns),

@@ -17,6 +17,7 @@ import androidx.compose.ui.layout.layout
 import tv.own.owntv.features.live.LiveCategories
 import tv.own.owntv.core.live.ProviderTags
 import tv.own.owntv.features.live.edgeScrollSpec
+import tv.own.owntv.features.live.rowAlignScrollSpec
 import tv.own.owntv.features.shell.components.VodCinematicBackdrop
 import tv.own.owntv.features.shell.components.VodDetailsCard
 import tv.own.owntv.features.shell.components.VodGroupDetails
@@ -664,7 +665,7 @@ private fun SeriesGrid(
                         // A fixed gap under the toolbar that scrolling posters never enter; the grid's own
                         // top padding is only the room the focused poster's lift and ring need.
                         Spacer(Modifier.height(14.mpx))
-                        CompositionLocalProvider(LocalBringIntoViewSpec provides edgeScrollSpec) {
+                        CompositionLocalProvider(LocalBringIntoViewSpec provides rowAlignScrollSpec) {
                             LazyVerticalGrid(
                                 state = effectiveGridState,
                                 columns = GridCells.Fixed(columns),
@@ -1455,6 +1456,9 @@ private fun EpisodeView(
                         trailing = secondsLeft(target)?.let { "· " + stringResource(R.string.home_time_left, vodRuntime(it)) },
                         onClick = { startEpisode(target) },
                         icon = OwnTVIcon.PLAY, iconFilled = true, tinted = true, height = 60.mpx, textSize = 20,
+                        // Poterx: the one button that may give way. With its long label ("Oglądaj dalej
+                        // S01 E03 · pozostało 45 min") the row overflowed and cut "Pobierz sezon" short.
+                        modifier = Modifier.weight(1f, fill = false),
                     )
                 }
                 val favourite = favoriteIds.contains(series.id)
