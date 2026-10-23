@@ -30,6 +30,8 @@ object LockedSource {
         val contact: String = "",
         /** The provider's TMDB API key (v3) for posters and descriptions; blank when none was built in. */
         val tmdbKey: String = "",
+        /** The provider's update server (`https://…`), read for `update.json`; blank keeps GitHub Releases. */
+        val updateUrl: String = "",
     )
 
     /** True for a build that carries an account. A build without one behaves like stock OwnTV. */
@@ -58,6 +60,7 @@ object LockedSource {
             servicePin = lines.getOrNull(4)?.trim().orEmpty(),
             contact = lines.getOrNull(5)?.trim().orEmpty(),
             tmdbKey = lines.getOrNull(6)?.trim().orEmpty(),
+            updateUrl = lines.getOrNull(7)?.trim().orEmpty(),
         )
     }.getOrNull()
 

@@ -55,7 +55,6 @@ import tv.own.owntv.core.launcher.LauncherDeepLink
 import tv.own.owntv.core.nav.MainSection
 import tv.own.owntv.core.launcher.LauncherIntegrationRepository
 import tv.own.owntv.core.launcher.LauncherLaunch
-import tv.own.owntv.core.update.UpdateManager
 import tv.own.owntv.features.update.UpdateDialog
 import tv.own.owntv.features.update.UpdateStatusToast
 import tv.own.owntv.features.downloads.DownloadsScreen
@@ -2046,7 +2045,9 @@ fun OwnTVShell(
 
         // Poterx: the subscription-ends-soon card, kept back while a channel or film is fullscreen.
         tv.own.owntv.poterx.PoterxExpiryNotice(canShow = playerMode == PlayerMode.NONE && !showExit)
-        val updateManager = koinInject<UpdateManager>()
+        val updateManager = koinInject<tv.own.owntv.features.update.AppUpdater>()
+        // Poterx: the server no longer serves this version — the card stays until the update is taken.
+        val updateRequired by updateManager.required.collectAsStateWithLifecycle()
         var showStartupToast by remember { mutableStateOf(false) }
         var showChangelog by remember { mutableStateOf(false) }
         val settingsRepo = koinInject<tv.own.owntv.core.settings.SettingsRepository>()
@@ -2060,7 +2061,9 @@ fun OwnTVShell(
                 updateManager.check()
             }
         }
-        if (showChangelog) {
+        if (updateRequired && playerMode == PlayerMode.NONE) {
+            UpdateDialog(onDismiss = {}, checkOnOpen = false, required = true)
+        } else if (showChangelog) {
             // Full "What's New" changelog (same dialog the manual Settings check uses), shown when
             // the startup card's "What's New" is pressed. No re-check — the release is already loaded.
             val dismissChangelog: () -> Unit = {

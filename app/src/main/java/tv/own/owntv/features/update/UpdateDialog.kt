@@ -45,13 +45,15 @@ import androidx.compose.ui.draw.clip
  * [checkOnOpen] makes opening the dialog trigger a fresh check (the Settings path).
  */
 @Composable
-fun UpdateDialog(onDismiss: () -> Unit, checkOnOpen: Boolean = false) {
-    val manager: UpdateManager = koinInject()
+fun UpdateDialog(onDismiss: () -> Unit, checkOnOpen: Boolean = false, required: Boolean = false) {
+    // Poterx: [required] is the server's "this version is no longer served" — no Later, no Close, no Back.
+    val manager: AppUpdater = koinInject()
     val state by manager.state.collectAsStateWithLifecycle()
     val focus = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        if (checkOnOpen) manager.check()
+        // A required update re-asks the server too, so the card never sits on a stale Idle state.
+        if (checkOnOpen || required) manager.check()
     }
     LaunchedEffect(state) {
         if (state is UpdateManager.State.Available || state is UpdateManager.State.UpToDate || state is UpdateManager.State.Failed) {
@@ -61,19 +63,20 @@ fun UpdateDialog(onDismiss: () -> Unit, checkOnOpen: Boolean = false) {
     val busy = state is UpdateManager.State.Idle || state is UpdateManager.State.Checking || state is UpdateManager.State.Downloading
     tv.own.owntv.ui.stage.StagePopup(
         onDismiss = onDismiss,
-        title = stringResource(R.string.update_title),
+        title = stringResource(if (required) R.string.poterx_update_required_title else R.string.update_title),
         width = 900.mpx,
         scroll = false,
+        dismissOnBackPress = !required,
         buttons = if (busy) null else ({
             when (val s = state) {
                 UpdateManager.State.UpToDate ->
                     StageButton(stringResource(R.string.settings_close), onClick = onDismiss, height = 56.mpx, textSize = 19, tinted = true, modifier = Modifier.focusRequester(focus))
                 is UpdateManager.State.Available -> {
-                    StageButton(stringResource(R.string.update_later), onClick = onDismiss, height = 56.mpx, textSize = 19)
+                    if (!required) StageButton(stringResource(R.string.update_later), onClick = onDismiss, height = 56.mpx, textSize = 19)
                     StageButton(stringResource(R.string.update_now), onClick = { manager.downloadAndInstall() }, icon = OwnTVIcon.DOWNLOADS, height = 56.mpx, textSize = 19, tinted = true, modifier = Modifier.focusRequester(focus))
                 }
                 is UpdateManager.State.Failed -> {
-                    StageButton(stringResource(R.string.settings_close), onClick = onDismiss, height = 56.mpx, textSize = 19)
+                    if (!required) StageButton(stringResource(R.string.settings_close), onClick = onDismiss, height = 56.mpx, textSize = 19)
                     StageButton(stringResource(R.string.update_try_again), onClick = { manager.retry() }, height = 56.mpx, textSize = 19, tinted = true, modifier = Modifier.focusRequester(focus))
                 }
                 else -> Unit

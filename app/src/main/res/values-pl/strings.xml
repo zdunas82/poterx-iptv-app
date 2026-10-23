@@ -40,6 +40,9 @@
     <string name="poterx_account_connections_of">%1$d z %2$d</string>
     <string name="poterx_sign_out">Wyloguj</string>
     <string name="poterx_sign_out_description">Usuwa listę kanałów i przewodnik z tego telewizora; potem może zalogować się inne konto</string>
+    <string name="poterx_test_channel">Kanał testowy</string>
+    <string name="poterx_test_channel_description">Aktualizacje przed klientami · pyta o PIN serwisowy</string>
+    <string name="poterx_update_required_title">Wymagana aktualizacja</string>
     <string name="poterx_sign_out_body">Lista kanałów, przewodnik i profile na tym telewizorze zostaną usunięte. Do ponownego zalogowania potrzebny będzie login i hasło.</string>
     <string name="poterx_service_pin">Podaj PIN serwisowy</string>
     <string name="poterx_contact_title">Twój dostawca</string>

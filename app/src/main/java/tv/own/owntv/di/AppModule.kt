@@ -9,6 +9,7 @@ import org.koin.core.module.dsl.viewModelOf
 import tv.own.owntv.features.more.MoreCountsViewModel
 import tv.own.owntv.features.shell.RailCountsViewModel
 import org.koin.dsl.module
+import org.koin.android.ext.koin.androidContext
 import tv.own.owntv.features.customize.CustomizeItemsViewModel
 import tv.own.owntv.features.customize.CustomizeViewModel
 import tv.own.owntv.features.downloads.DownloadsViewModel
@@ -61,6 +62,15 @@ val appModule = module {
     singleOf(::HomeFeedReader)
     // Sports Hub: which match the playing channel came from. Lazy; nothing runs until it is asked.
     singleOf(::SportsPlayback)
+    // Poterx: updates from the provider's own server when one is built in, else core's GitHub Releases.
+    single<tv.own.owntv.features.update.AppUpdater> {
+        val url = tv.own.owntv.poterx.LockedSource.account?.updateUrl.orEmpty()
+        if (tv.own.owntv.poterx.LockedSource.enabled && url.startsWith("https://")) {
+            tv.own.owntv.poterx.PoterxUpdater(androidContext(), get(), get(), url)
+        } else {
+            tv.own.owntv.features.update.CoreUpdater(get())
+        }
+    }
     // Process-long scope for work that must outlive the screen that started it (a first-run restore).
     single<kotlinx.coroutines.CoroutineScope> {
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)

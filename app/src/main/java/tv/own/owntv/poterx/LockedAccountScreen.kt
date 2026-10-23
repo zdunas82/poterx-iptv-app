@@ -53,6 +53,10 @@ fun LockedAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var askPin by remember { mutableStateOf(false) }
     var pinWrong by remember { mutableStateOf(false) }
     var signingOut by remember { mutableStateOf(false) }
+    val updater = koinInject<tv.own.owntv.features.update.AppUpdater>() as? PoterxUpdater
+    var testChannel by remember { mutableStateOf(updater?.testChannel == true) }
+    var askTestPin by remember { mutableStateOf(false) }
+    var testPinWrong by remember { mutableStateOf(false) }
 
     // The panel is asked once when the page opens, and again on "Check now".
     LaunchedEffect(source?.id) { source?.let { vm.testSource(it) } }
@@ -129,6 +133,20 @@ fun LockedAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     onClick = {},
                 )
             }
+            // Poterx v0.3: the provider's own devices read the test channel of the update server.
+            if (updater != null) {
+                StageSettingRow(
+                    icon = OwnTVIcon.DOWNLOADS,
+                    title = stringResource(R.string.poterx_test_channel),
+                    desc = stringResource(R.string.poterx_test_channel_description),
+                    value = SettingValue.Switch(testChannel),
+                    onClick = {
+                        if (testChannel) { updater.testChannel = false; testChannel = false }
+                        else if (servicePin.isBlank()) { updater.testChannel = true; testChannel = true }
+                        else askTestPin = true
+                    },
+                )
+            }
             StageSettingRow(
                 icon = OwnTVIcon.POWER,
                 title = stringResource(R.string.poterx_sign_out),
@@ -169,6 +187,13 @@ fun LockedAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             title = if (pinWrong) stringResource(R.string.profiles_wrong_pin) else stringResource(R.string.poterx_service_pin),
             onSubmit = { pin -> if (pin == servicePin) { askPin = false; signOut() } else pinWrong = true },
             onDismiss = { askPin = false },
+        )
+    }
+    if (askTestPin && updater != null) {
+        PinDialog(
+            title = if (testPinWrong) stringResource(R.string.profiles_wrong_pin) else stringResource(R.string.poterx_service_pin),
+            onSubmit = { pin -> if (pin == servicePin) { askTestPin = false; testPinWrong = false; updater.testChannel = true; testChannel = true } else testPinWrong = true },
+            onDismiss = { askTestPin = false; testPinWrong = false },
         )
     }
     LaunchedEffect(source?.id) { if (source != null) runCatching { first.requestFocus() } }

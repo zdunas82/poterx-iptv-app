@@ -626,7 +626,7 @@ internal fun ErrorLogPage(setEntry: (() -> Boolean) -> Unit, onCountChanged: () 
 @Composable
 internal fun AboutPage(vm: MoreCountsViewModel, entry: FocusRequester, onOpenLanguage: () -> Unit) {
     val context = LocalContext.current
-    val manager: UpdateManager = koinInject()
+    val manager: tv.own.owntv.features.update.AppUpdater = koinInject()
     val updateState by manager.state.collectAsStateWithLifecycle()
     val checkedAt by vm.lastUpdateCheckAt.collectAsStateWithLifecycle()
     var showUpdate by remember { mutableStateOf(false) }

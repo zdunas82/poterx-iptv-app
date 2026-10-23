@@ -70,6 +70,10 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 - **v0.2.7** (w toku): karta aktualizacji bez adresów GitHuba w opisie wydania (linki i wiersze
   „Full Changelog” wycinane w wersji zamkniętej); plan VPS pod aktualizacje (`VPS.md`); propozycja
   Info bar 2 zapisana w planie.
+- **v0.3.0** (w toku): własny serwer aktualizacji (`POTERX_UPDATE_URL`, `PoterxUpdater`: `update.json`,
+  SHA‑256, `minVersionCode` → karta „Wymagana aktualizacja”); kanał testowy za PIN‑em w Ustawieniach ›
+  Konto; CI po tagu wgrywa APK, changelog i `update-test.json` na VPS (`rsync`), opis wydania z
+  `docs/poterx/changelog/<wersja>.md`; workflow „Promote update” publikuje wersję dla klientów.
 
 ## v0.1.2 — po testach na Streamerze (dni)
 - [ ] Poprawki z listy uwag: dolny pasek (rozmiary, czas, pokazywanie po OK), EPG, start.
@@ -106,8 +110,8 @@ serial, Ustawienia › Konto (status, ważność), O aplikacji (brak adresów), 
 poprzedniej wersji bez utraty danych.
 
 ## v0.3 — obsługa klientów na odległość
-- [ ] **Własny serwer aktualizacji** zamiast GitHub Releases — pełny plan w `docs/poterx/VPS.md`
-      (po stronie aplikacji ok. 1 dzień):
+- [x] **Własny serwer aktualizacji** zamiast GitHub Releases — plan w `docs/poterx/VPS.md`, wdrożone
+      w v0.3.0 (bez `messages.json` i strony `install/`, które zostają w planie):
       - plik `https://<domena>/poterx/update.json` z polami `versionCode`, `versionName`,
         `apkUrl`, `sha256`, `notes` (PL), `minVersionCode` (wymuszona aktualizacja),
         `channel` (`test`/`stable` — kanał testowy dla własnych urządzeń);

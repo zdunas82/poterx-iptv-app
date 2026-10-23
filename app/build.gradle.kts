@@ -146,9 +146,11 @@ android {
             // Poterx v0.2.1: the provider's own TMDB API key (v3), so posters and descriptions come
             // straight from TMDB instead of the upstream project's shared service.
             val tmdb = poterxValue("POTERX_TMDB_KEY", "poterx.tmdbKey")?.trim().orEmpty()
+            // Poterx v0.3: the provider's own update server (https://…); blank keeps GitHub Releases.
+            val updateUrl = poterxValue("POTERX_UPDATE_URL", "poterx.updateUrl")?.trim()?.trimEnd('/').orEmpty()
             // Server alone is a valid lock: the user then types only a username and password.
             if (server.isNullOrBlank()) null
-            else listOf(PoterxLink.normalizeServer(server), user?.trim().orEmpty(), pass.orEmpty(), hls, pin, contact, tmdb)
+            else listOf(PoterxLink.normalizeServer(server), user?.trim().orEmpty(), pass.orEmpty(), hls, pin, contact, tmdb, updateUrl)
         }
         val poterxSealed = poterxAccount?.let { PoterxLink.seal(it.joinToString("\n")) }
         buildConfigField("boolean", "POTERX_LOCKED", (poterxSealed != null).toString())

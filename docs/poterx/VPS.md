@@ -168,6 +168,19 @@ Aplikacja pokazuje komunikat raz (po `id`) na ekranie głównym, w oknie czasu `
   wersjach (bez żadnych danych osobowych): `grep -o 'PoterxTV/[0-9.]*' /var/log/caddy/app.log | sort | uniq -c`.
 - Monitoring: darmowy UptimeRobot na `https://app.<domena>/update.json`.
 
+## 6a. Stan wdrożenia (v0.3.0)
+
+- Zrobione po stronie aplikacji i CI: `POTERX_UPDATE_URL` w blobie, `PoterxUpdater` (SHA‑256,
+  `minVersionCode`, kanał testowy za PIN‑em), krok „Publish to the update server” w `android.yml`
+  (po tagu, na kanał testowy), workflow „Promote update” (`promote.yml`, pole `version`), opis wydania
+  z `docs/poterx/changelog/<wersja>.md`.
+- Sekrety repo: `POTERX_UPDATE_URL`, `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`. Zmienna repo (Settings ›
+  Variables) `POTERX_MIN_VERSION_CODE` — kod wersji, poniżej której aplikacja wymusza aktualizację
+  (np. `300` dla 0.3.0; puste = nic nie wymusza).
+- Promocja bez logowania na VPS: Actions › „Promote update” › Run workflow › wersja. Skrypt
+  `poterx-promote` z sekcji 3 jest alternatywą.
+- Jeszcze nie: `messages.json` w aplikacji, strona `install/` z QR.
+
 ## 7. Kolejność wdrożenia
 
 1. Ty: domena + rekord A, kroki 1–4 z sekcji 3 (albo dajesz mi dostęp SSH i robię to sam).

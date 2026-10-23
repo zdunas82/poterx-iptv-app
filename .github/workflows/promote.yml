@@ -1,0 +1,56 @@
+name: Promote update
+
+# Poterx: moves the version on the TEST channel (update-test.json) to the customers' channel
+# (update.json) on the provider's update server, after the provider has tested it. Nothing is
+# rebuilt: the APK already sits on the server; only the manifest and changelog/latest.md change.
+# The SSH key is limited to rsync into the web root, so the manifest is fetched over HTTPS and
+# written back under its new name.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Wersja do publikacji dla klientów (np. 0.3.0) — musi być tą, która leży na kanale testowym"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      UPDATE_URL: ${{ secrets.POTERX_UPDATE_URL }}
+      WANTED: ${{ inputs.version }}
+    steps:
+      - name: Fetch the test manifest and check the version
+        run: |
+          set -euo pipefail
+          curl -fsSL -H 'Cache-Control: no-cache' "${UPDATE_URL%/}/update-test.json" -o update.json
+          FOUND=$(python3 -c 'import json,sys; print(json.load(open("update.json"))["versionName"])')
+          if [ "$FOUND" != "$WANTED" ]; then
+            echo "::error::The test channel holds $FOUND, not $WANTED. Publish $WANTED first (tag v$WANTED)."
+            exit 1
+          fi
+          curl -fsSL "${UPDATE_URL%/}/changelog/${WANTED}.md" -o latest.md || echo "- Wersja ${WANTED}." > latest.md
+          python3 -c 'import json; d=json.load(open("update.json")); print("Promoting", d["versionName"], "code", d["versionCode"], "min", d.get("minVersionCode"))'
+
+      - name: Write update.json and changelog/latest.md
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/poterx_ci && chmod 600 ~/.ssh/poterx_ci
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          RSH="ssh -i ~/.ssh/poterx_ci -o IdentitiesOnly=yes"
+          rsync -az --rsh="$RSH" latest.md "$VPS_USER@$VPS_HOST:/changelog/latest.md"
+          rsync -az --rsh="$RSH" update.json "$VPS_USER@$VPS_HOST:/update.json"
+          echo "Customers now receive ${WANTED}."
+
+      - name: Verify
+        run: |
+          sleep 3
+          curl -fsSL -H 'Cache-Control: no-cache' "${UPDATE_URL%/}/update.json" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("update.json:", d["versionName"], d["apkUrl"])'

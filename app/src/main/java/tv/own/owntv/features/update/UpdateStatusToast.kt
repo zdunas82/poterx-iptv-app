@@ -40,7 +40,7 @@ import tv.own.owntv.ui.components.OwnTVSpinner
  */
 @Composable
 fun UpdateStatusToast(onDone: () -> Unit, onViewChangelog: () -> Unit, modifier: Modifier = Modifier) {
-    val manager: UpdateManager = koinInject()
+    val manager: AppUpdater = koinInject()
     val state by manager.state.collectAsStateWithLifecycle()
     val focus = remember { FocusRequester() }
 
