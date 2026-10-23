@@ -184,7 +184,10 @@ Aplikacja pokazuje komunikat raz (po `id`) na ekranie głównym, w oknie czasu `
   wydanie jako pre-release, więc do promocji nikt nic nie dostaje.
 - Sekret `VPS_KNOWN_HOSTS`: wynik `ssh-keyscan -H app.poter.live` zapisany raz; bez niego CI ufa
   pierwszej odpowiedzi serwera (ostrzeżenie w logu).
-- Jeszcze nie: `messages.json` w aplikacji, strona `install/` z QR.
+- `apk/PoterxTV.apk` to zawsze wersja opublikowana dla klientów („Promote update” podmienia plik);
+  instrukcja dla klientów (`docs/poterx/instrukcja-klienta.html`) wskazuje ten adres i jest
+  serwowana pod `https://app.poter.live/install/` (wgrywana przy każdym buildzie z tagu).
+- Jeszcze nie: `messages.json` w aplikacji, kod QR na stronie instrukcji.
 
 ## 7. Kolejność wdrożenia
 

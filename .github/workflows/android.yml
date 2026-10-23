@@ -299,5 +299,9 @@ jobs:
           RSH="ssh -i ~/.ssh/poterx_ci -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
           rsync -az --rsh="$RSH" upload/apk/ "$VPS_USER@$VPS_HOST:/apk/"
           rsync -az --rsh="$RSH" upload/changelog/ "$VPS_USER@$VPS_HOST:/changelog/"
+          # The customer instruction page, served at /install/ (it names apk/PoterxTV.apk, which
+          # "Promote update" keeps at the promoted version).
+          mkdir -p upload/install && cp docs/poterx/instrukcja-klienta.html upload/install/index.html
+          rsync -az --rsh="$RSH" upload/install/ "$VPS_USER@$VPS_HOST:/install/"
           rsync -az --rsh="$RSH" upload/update-test.json "$VPS_USER@$VPS_HOST:/update-test.json"
           echo "Published ${VERSION_NAME} (code ${VERSION_CODE}) to the TEST channel."
