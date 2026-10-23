@@ -50,10 +50,6 @@ const val POTERX_EXPIRY_WARN_DAYS = 7
 
 /** Two Back presses this close together on a live channel toggle to the previous channel. */
 const val POTERX_BACK_TWICE_MS = 400L
-
-/** A channel opened at start waits this long for its in-pane preview to show a picture before it is
- *  promoted to full screen regardless (see OwnTVShell.openChannelAtStart). */
-const val POTERX_START_PREVIEW_WAIT_MS = 6_000L
 private const val EXPIRY_CHECK_DELAY_MS = 8_000L
 private const val DAY_MS = 24L * 60 * 60 * 1000
 private const val PREFS = "poterx_expiry"
