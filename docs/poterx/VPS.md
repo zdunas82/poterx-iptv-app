@@ -177,8 +177,13 @@ Aplikacja pokazuje komunikat raz (po `id`) na ekranie głównym, w oknie czasu `
 - Sekrety repo: `POTERX_UPDATE_URL`, `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`. Zmienna repo (Settings ›
   Variables) `POTERX_MIN_VERSION_CODE` — kod wersji, poniżej której aplikacja wymusza aktualizację
   (np. `300` dla 0.3.0; puste = nic nie wymusza).
-- Promocja bez logowania na VPS: Actions › „Promote update” › Run workflow › wersja. Skrypt
-  `poterx-promote` z sekcji 3 jest alternatywą.
+- Promocja bez logowania na VPS: Actions › „Promote update” › Run workflow › wersja. Workflow
+  sprawdza SHA‑256 pliku APK na serwerze, zapisuje `update.json` i `changelog/latest.md`, a potem
+  przestawia wydanie `vX.Y.Z` na GitHubie na „latest” (bez „pre-release”) — klienci na v0.2.x
+  czytają jeszcze GitHub, nowsi serwer, jeden przycisk obsługuje obie grupy. Build z tagu tworzy
+  wydanie jako pre-release, więc do promocji nikt nic nie dostaje.
+- Sekret `VPS_KNOWN_HOSTS`: wynik `ssh-keyscan -H app.poter.live` zapisany raz; bez niego CI ufa
+  pierwszej odpowiedzi serwera (ostrzeżenie w logu).
 - Jeszcze nie: `messages.json` w aplikacji, strona `install/` z QR.
 
 ## 7. Kolejność wdrożenia

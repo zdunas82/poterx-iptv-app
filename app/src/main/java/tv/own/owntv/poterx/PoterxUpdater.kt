@@ -95,6 +95,15 @@ class PoterxUpdater(
                     .header("Cache-Control", "no-cache")
                     .build()
                 client.newCall(request).execute().use { resp ->
+                    // No manifest on this channel yet (nothing promoted so far) is "nothing to offer",
+                    // not a failure to show at start.
+                    if (resp.code == 404) {
+                        settings.recordUpdateCheck(System.currentTimeMillis())
+                        release = null
+                        _required.value = false
+                        _state.value = State.UpToDate
+                        return@use
+                    }
                     if (!resp.isSuccessful) throw CheckHttpException(resp.code)
                     val body = resp.body.string()
                     val o = runCatching { JSONObject(body) }.getOrElse { throw InvalidResponseException() }

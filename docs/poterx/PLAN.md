@@ -94,13 +94,14 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 
 ## Procedura wydania (od testów u klientów, 2026‑10‑23)
 1. Nowy commit przechodzi CI (Android CI, gałąź `claude/android-tv-m3u-app-41s6di`).
-2. Wydanie na GitHubie z tagiem `vX.Y.Z` **z zaznaczonym „Set as a pre-release”**. Opis wydania
-   po polsku, bez linków; nie klikać „Generate release notes” (wstawia adresy GitHuba — aplikacja
-   w wersji zamkniętej i tak je wycina, ale nie ma co ich tam dawać). Aplikacja
+2. Wydanie na GitHubie z tagiem `vX.Y.Z` **z zaznaczonym „Set as a pre-release”** (od v0.3.0 CI
+   i tak oznacza je jako pre-release, a opis bierze z `docs/poterx/changelog/X.Y.Z.md`). Opis
+   po polsku, bez linków; nie klikać „Generate release notes”. Aplikacja
    pyta o `releases/latest`, a GitHub nie liczy tam pre-release — klienci nic nie widzą.
 3. Instalacja APK z pre-release na własnym Shieldzie/Streamerze, test według listy niżej.
-4. Po testach: edycja wydania, odznaczenie „pre-release” (ewentualnie „Set as the latest
-   release”). Od tej chwili klienci dostają kartę „Nowa wersja” przy starcie.
+4. Po testach: Actions › „Promote update” › wersja. Workflow zapisuje `update.json` na serwerze
+   (klienci od v0.3.0) i odznacza „pre-release” na GitHubie (klienci na v0.2.x). Od tej chwili
+   wszyscy dostają kartę „Nowa wersja” przy starcie.
 5. Wpadka po publikacji: ponowne zaznaczenie „pre-release” cofa ofertę aktualizacji dla
    klientów, którzy jeszcze jej nie pobrali.
 

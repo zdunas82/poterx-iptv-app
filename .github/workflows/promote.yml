@@ -1,10 +1,11 @@
 name: Promote update
 
-# Poterx: moves the version on the TEST channel (update-test.json) to the customers' channel
-# (update.json) on the provider's update server, after the provider has tested it. Nothing is
-# rebuilt: the APK already sits on the server; only the manifest and changelog/latest.md change.
-# The SSH key is limited to rsync into the web root, so the manifest is fetched over HTTPS and
-# written back under its new name.
+# Poterx: publishes the version on the TEST channel (update-test.json) to customers, after the
+# provider has tested it. One button for both groups: the server's update.json (v0.3.0 and up read
+# it) and the GitHub release marked "latest" and no longer a pre-release (v0.2.x still asks GitHub).
+# Nothing is rebuilt: the APK already sits on the server and on the release. The SSH key is limited
+# to rsync into the web root, so the manifest is fetched over HTTPS, the APK is checked against its
+# SHA-256, and the manifest is written back under its new name.
 
 on:
   workflow_dispatch:
@@ -15,7 +16,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write   # marks the GitHub release as latest
 
 jobs:
   promote:
@@ -24,33 +25,54 @@ jobs:
       VPS_HOST: ${{ secrets.VPS_HOST }}
       VPS_USER: ${{ secrets.VPS_USER }}
       VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
       UPDATE_URL: ${{ secrets.POTERX_UPDATE_URL }}
       WANTED: ${{ inputs.version }}
     steps:
-      - name: Fetch the test manifest and check the version
+      - name: Fetch the test manifest, check the version and the APK's checksum
         run: |
           set -euo pipefail
-          curl -fsSL -H 'Cache-Control: no-cache' "${UPDATE_URL%/}/update-test.json" -o update.json
-          FOUND=$(python3 -c 'import json,sys; print(json.load(open("update.json"))["versionName"])')
+          BASE="${UPDATE_URL%/}"
+          curl -fsSL -H 'Cache-Control: no-cache' "$BASE/update-test.json" -o update.json
+          FOUND=$(python3 -c 'import json; print(json.load(open("update.json"))["versionName"])')
           if [ "$FOUND" != "$WANTED" ]; then
             echo "::error::The test channel holds $FOUND, not $WANTED. Publish $WANTED first (tag v$WANTED)."
             exit 1
           fi
-          curl -fsSL "${UPDATE_URL%/}/changelog/${WANTED}.md" -o latest.md || echo "- Wersja ${WANTED}." > latest.md
+          APK_URL=$(python3 -c 'import json; print(json.load(open("update.json"))["apkUrl"])')
+          WANT_SHA=$(python3 -c 'import json; print(json.load(open("update.json")).get("sha256",""))')
+          curl -fsSL "$APK_URL" -o release.apk
+          GOT_SHA=$(sha256sum release.apk | cut -d' ' -f1)
+          if [ -n "$WANT_SHA" ] && [ "$GOT_SHA" != "$WANT_SHA" ]; then
+            echo "::error::The APK on the server ($GOT_SHA) does not match the manifest ($WANT_SHA). Not promoting."
+            exit 1
+          fi
+          echo "APK on the server matches the manifest ($GOT_SHA, $(stat -c %s release.apk) bytes)."
+          curl -fsSL "$BASE/changelog/${WANTED}.md" -o latest.md || echo "- Wersja ${WANTED}." > latest.md
           python3 -c 'import json; d=json.load(open("update.json")); print("Promoting", d["versionName"], "code", d["versionCode"], "min", d.get("minVersionCode"))'
 
-      - name: Write update.json and changelog/latest.md
+      - name: Write update.json and changelog/latest.md on the server
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/poterx_ci && chmod 600 ~/.ssh/poterx_ci
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          RSH="ssh -i ~/.ssh/poterx_ci -o IdentitiesOnly=yes"
+          if [ -n "$VPS_KNOWN_HOSTS" ]; then printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else echo "::warning::No VPS_KNOWN_HOSTS secret — trusting the host key ssh-keyscan returns."; ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null; fi
+          RSH="ssh -i ~/.ssh/poterx_ci -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
           rsync -az --rsh="$RSH" latest.md "$VPS_USER@$VPS_HOST:/changelog/latest.md"
           rsync -az --rsh="$RSH" update.json "$VPS_USER@$VPS_HOST:/update.json"
-          echo "Customers now receive ${WANTED}."
+          echo "Customers on v0.3.0 and up now receive ${WANTED}."
 
-      - name: Verify
+      - name: Verify the server
         run: |
           sleep 3
           curl -fsSL -H 'Cache-Control: no-cache' "${UPDATE_URL%/}/update.json" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("update.json:", d["versionName"], d["apkUrl"])'
+
+      - name: Mark the GitHub release as latest (customers on v0.2.x)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh release edit "v${WANTED}" --prerelease=false --latest
+          echo "Release v${WANTED} is now latest; v0.2.x installs receive it from GitHub."

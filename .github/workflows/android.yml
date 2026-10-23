@@ -251,6 +251,10 @@ jobs:
           # carry repository links a customer must not see.
           body_path: ${{ env.CHANGELOG_FILE }}
           generate_release_notes: false
+          # Customers on v0.2.x still read GitHub's "latest" release. A tag build is a pre-release,
+          # so they see nothing until "Promote update" marks it latest together with update.json.
+          prerelease: true
+          make_latest: false
 
       # Poterx v0.3: the provider's own update server. The tag build lands on the TEST channel
       # (update-test.json); the provider promotes it to customers with the "Promote update" workflow
@@ -262,6 +266,7 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
           UPDATE_URL: ${{ secrets.POTERX_UPDATE_URL }}
           VERSION_NAME: ${{ steps.ver.outputs.name }}
           VERSION_CODE: ${{ steps.ver.outputs.code }}
@@ -287,8 +292,11 @@ jobs:
           PY
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/poterx_ci && chmod 600 ~/.ssh/poterx_ci
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          RSH="ssh -i ~/.ssh/poterx_ci -o IdentitiesOnly=yes"
+          # The server's host key comes from the VPS_KNOWN_HOSTS secret (ssh-keyscan output saved
+          # once by the provider); without it the key is fetched now, which trusts the first answer.
+          if [ -n "$VPS_KNOWN_HOSTS" ]; then printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else echo "::warning::No VPS_KNOWN_HOSTS secret — trusting the host key ssh-keyscan returns."; ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null; fi
+          RSH="ssh -i ~/.ssh/poterx_ci -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
           rsync -az --rsh="$RSH" upload/apk/ "$VPS_USER@$VPS_HOST:/apk/"
           rsync -az --rsh="$RSH" upload/changelog/ "$VPS_USER@$VPS_HOST:/changelog/"
           rsync -az --rsh="$RSH" upload/update-test.json "$VPS_USER@$VPS_HOST:/update-test.json"
