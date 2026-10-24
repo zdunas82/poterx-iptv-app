@@ -70,7 +70,7 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 - **v0.2.7** (w toku): karta aktualizacji bez adresów GitHuba w opisie wydania (linki i wiersze
   „Full Changelog” wycinane w wersji zamkniętej); plan VPS pod aktualizacje (`VPS.md`); propozycja
   Info bar 2 zapisana w planie.
-- **v0.4.0** (w toku): VPN w aplikacji (Ustawienia › Sieć › VPN): tunel WireGuard (biblioteka
+- **v0.3.3** (w toku, pre-release do testów na Shieldzie): VPN w aplikacji (Ustawienia › Sieć › VPN): tunel WireGuard (biblioteka
   `com.wireguard.android:tunnel`) tylko dla pakietu Poterx, import profilu z pliku `.conf` lub
   wklejonego tekstu (np. Surfshark › konfiguracja ręczna), zapisane profile szyfrowane kluczem z
   Android Keystore, Połącz/Rozłącz ze stanem (handshake, ruch), „Łącz przy starcie”. Bez systemowego
