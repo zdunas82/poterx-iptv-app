@@ -298,6 +298,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Poterx: the WireGuard tunnel library uses java.util.Optional and friends below API 26's
+        // guarantees; desugared so the one library does not raise minSdk.
+        isCoreLibraryDesugaringEnabled = true
     }
 }
 
@@ -411,6 +414,9 @@ val verifyI18nLiterals = tasks.register<VerifyI18nLiterals>("verifyI18nLiterals"
 tasks.named("preBuild") { dependsOn(verifyI18nLiterals) }
 
 dependencies {
+    // Poterx: in-app WireGuard tunnel (Settings › Network › VPN).
+    implementation(libs.wireguard.tunnel)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
     // The shared data/settings/sync module. It lives in its own repository now — see
     // https://github.com/ahXN00/OwnTV_Core. Set owntv.corePath in ~/.gradle/gradle.properties to
     // build against its source instead of this pinned version.

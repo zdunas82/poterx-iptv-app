@@ -82,6 +82,10 @@ espressoCore = "3.7.0"
 owntvCore = "1.0.69"
 
 [libraries]
+# Poterx: the WireGuard tunnel library (Apache 2.0) and the JDK desugaring it needs.
+wireguard-tunnel = { group = "com.wireguard.android", name = "tunnel", version = "1.0.20260102" }
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version = "2.1.5" }
+
 # The shared engine, from its own repository
 owntv-core = { group = "tv.own.owntv", name = "core", version.ref = "owntvCore" }
 owntv-player-core = { group = "tv.own.owntv", name = "player-core", version.ref = "owntvCore" }

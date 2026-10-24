@@ -62,6 +62,8 @@ val appModule = module {
     singleOf(::HomeFeedReader)
     // Sports Hub: which match the playing channel came from. Lazy; nothing runs until it is asked.
     singleOf(::SportsPlayback)
+    // Poterx: the in-app WireGuard tunnel (Settings › Network › VPN).
+    single { tv.own.owntv.poterx.vpn.PoterxVpn(androidContext()) }
     // Poterx: updates from the provider's own server when one is built in, else core's GitHub Releases.
     single<tv.own.owntv.features.update.AppUpdater> {
         val url = tv.own.owntv.poterx.LockedSource.account?.updateUrl.orEmpty()

@@ -70,7 +70,12 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 - **v0.2.7** (w toku): karta aktualizacji bez adresów GitHuba w opisie wydania (linki i wiersze
   „Full Changelog” wycinane w wersji zamkniętej); plan VPS pod aktualizacje (`VPS.md`); propozycja
   Info bar 2 zapisana w planie.
-- **v0.3.2** (w toku, po audycie v0.3.1): siatki filmów i seriali dosuwają rząd do górnej krawędzi,
+- **v0.4.0** (w toku): VPN w aplikacji (Ustawienia › Sieć › VPN): tunel WireGuard (biblioteka
+  `com.wireguard.android:tunnel`) tylko dla pakietu Poterx, import profilu z pliku `.conf` lub
+  wklejonego tekstu (np. Surfshark › konfiguracja ręczna), zapisane profile szyfrowane kluczem z
+  Android Keystore, Połącz/Rozłącz ze stanem (handshake, ruch), „Łącz przy starcie”. Bez systemowego
+  kill switcha; zewnętrzny odtwarzacz poza tunelem.
+- **v0.3.2** (2026‑10‑23, tag f5a58ab, opublikowana dla klientów): siatki filmów i seriali dosuwają rząd do górnej krawędzi,
   więc podpisy poprzedniego rzędu nie zostają pod paskiem; na stronie serialu ustępuje przycisk
   odtwarzania, nie „Pobierz sezon”.
 - **v0.3.1** (2026‑10‑23, tag 6d3ac04): pierwsza wersja dostarczona z serwera aktualizacji (kanał

@@ -32,3 +32,6 @@
     public static int i(...);
     public static int w(...);
 }
+
+# Poterx: the WireGuard tunnel library talks to its Go core over JNI; keep it whole.
+-keep class com.wireguard.** { *; }

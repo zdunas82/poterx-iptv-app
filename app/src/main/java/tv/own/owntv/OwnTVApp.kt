@@ -150,6 +150,8 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
             appScope.launch { runCatching { tv.own.owntv.poterx.PoterxAccount.ensureUserAgent(koin.get(), koin.get()) } }
             // Poterx: a Trending row whose first download failed gets another go.
             tv.own.owntv.poterx.PoterxDefaults.ensureTrending(appScope, koin.get(), koin.get(), koin.get())
+            // Poterx: the VPN profile marked "connect on start" comes up before the first stream.
+            runCatching { koin.get<tv.own.owntv.poterx.vpn.PoterxVpn>().autoConnectIfReady() }
         }
         // Sports: core decides from Auto rebuild whether the stored board is due ("on every app start",
         // or older than the chosen hours). It reads one small file and touches no database.
