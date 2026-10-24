@@ -41,4 +41,21 @@ class PoterxVpnConfigTest {
         val routed = PoterxVpn.withAppRouting(windows, "tv.own.owntv")
         assertTrue(routed.lines().any { it.trim() == "IncludedApplications = tv.own.owntv" })
     }
+
+    @Test
+    fun `surfshark config picks the least loaded cluster of the country and parses`() {
+        val clusters = listOf(
+            SurfsharkClient.Cluster("pl-waw.prod.surfshark.com", "xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg=", "Poland", "PL", "Warsaw", 40),
+            SurfsharkClient.Cluster("pl-gdn.prod.surfshark.com", "xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg=", "Poland", "PL", "Gdansk", 12),
+            SurfsharkClient.Cluster("de-fra.prod.surfshark.com", "xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg=", "Germany", "DE", "Frankfurt", 3),
+        )
+        val picked = SurfsharkClient.pick(clusters, "pl")!!
+        assertEquals("pl-gdn.prod.surfshark.com", picked.connectionName)
+        assertEquals("de-fra.prod.surfshark.com", SurfsharkClient.pick(clusters, "XX")!!.connectionName)
+        val text = SurfsharkClient.buildConfig("YAnz5TF+lXXJte14tji3zlMNq+hd2rYUIgJBgB3fBmk=", picked)
+        val config = Config.parse(ByteArrayInputStream(PoterxVpn.withAppRouting(text, "tv.own.owntv").toByteArray()))
+        assertEquals(2, config.`interface`.dnsServers.size)
+        assertEquals(51820, config.peers[0].endpoint.get().port)
+        assertEquals(setOf("tv.own.owntv"), config.`interface`.includedApplications)
+    }
 }

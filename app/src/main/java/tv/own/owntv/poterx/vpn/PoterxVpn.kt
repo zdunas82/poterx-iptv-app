@@ -9,6 +9,7 @@ import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.BadConfigException
 import com.wireguard.config.Config
+import com.wireguard.crypto.KeyPair
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,11 +23,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.KeyStore
+import java.util.Locale
 import java.util.UUID
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -34,18 +37,32 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /**
- * Poterx: an in-app WireGuard tunnel (Settings › Network › VPN). The customer imports a `.conf` from
- * any WireGuard provider (Surfshark's manual set-up, a private server); the tunnel then carries this
- * application's traffic only, the rest of the television stays on the ordinary connection. Built on
- * the official `com.wireguard.android:tunnel` library and Android's VpnService.
+ * Poterx: an in-app WireGuard tunnel (Settings › Network › VPN). Two ways in: a `.conf` imported
+ * from any WireGuard provider, or a Surfshark account, for which the app registers its own key,
+ * picks the least loaded server of the chosen country and writes the configuration itself. The
+ * tunnel carries this application's traffic only, the rest of the television stays on the ordinary
+ * connection. Built on the official `com.wireguard.android:tunnel` library and Android's VpnService.
  *
- * Profiles hold a private key, so they are kept encrypted with a key in the Android Keystore; the
- * active profile and the connect-on-start switch are ordinary preferences.
+ * Profiles and the Surfshark session hold private keys, so they are kept encrypted with a key in the
+ * Android Keystore; the active profile and the connect-on-start switch are ordinary preferences.
  */
-class PoterxVpn(private val context: Context) {
+class PoterxVpn(private val context: Context, http: OkHttpClient) {
 
     /** A saved `.conf`: [config] is the file's text as imported, routing is added at connect time. */
     data class Profile(val id: String, val name: String, val endpoint: String, val config: String, val createdAt: Long)
+
+    /** The signed-in Surfshark account and this device's WireGuard key pair. */
+    data class SurfsharkAccount(
+        val email: String,
+        val token: String,
+        val renewToken: String,
+        val privateKey: String,
+        val publicKey: String,
+        val keyExpiresAt: String?,
+        val countryCode: String,
+        /** The server the last connection used, for the status line. */
+        val lastServer: String,
+    )
 
     sealed interface State {
         data object Off : State
@@ -55,23 +72,36 @@ class PoterxVpn(private val context: Context) {
         data class Failed(val reason: Failure) : State
     }
 
-    enum class Failure { NOT_AUTHORIZED, NO_PROFILE, BAD_CONFIG, DNS, START, UNKNOWN }
+    enum class Failure { NOT_AUTHORIZED, NO_PROFILE, BAD_CONFIG, DNS, START, ACCOUNT, SERVERS, UNKNOWN }
+
+    sealed interface SignIn {
+        data object Ok : SignIn
+        data object NeedsCode : SignIn
+        data object Rejected : SignIn
+    }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val lock = Mutex()
     private val prefs get() = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val backend: GoBackend by lazy { GoBackend(context) }
+    private val surfshark = SurfsharkClient(http)
     private var statsJob: Job? = null
     private var connectedAt = 0L
+    private var pendingCode: SurfsharkClient.Tokens? = null
+    private var pendingEmail: String = ""
 
     private val _profiles = MutableStateFlow<List<Profile>>(emptyList())
     val profiles: StateFlow<List<Profile>> = _profiles.asStateFlow()
+    private val _account = MutableStateFlow<SurfsharkAccount?>(null)
+    val account: StateFlow<SurfsharkAccount?> = _account.asStateFlow()
     private val _activeId = MutableStateFlow(prefs.getString(KEY_ACTIVE, null))
     val activeId: StateFlow<String?> = _activeId.asStateFlow()
     private val _autoConnect = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CONNECT, false))
     val autoConnect: StateFlow<Boolean> = _autoConnect.asStateFlow()
     private val _state = MutableStateFlow<State>(State.Off)
     val state: StateFlow<State> = _state.asStateFlow()
+    private val _clusters = MutableStateFlow<List<SurfsharkClient.Cluster>>(emptyList())
+    val clusters: StateFlow<List<SurfsharkClient.Cluster>> = _clusters.asStateFlow()
 
     private val tunnel = object : Tunnel {
         override fun getName(): String = TUNNEL_NAME
@@ -84,13 +114,26 @@ class PoterxVpn(private val context: Context) {
     }
 
     init {
-        scope.launch { _profiles.value = runCatching { store.load() }.getOrDefault(emptyList()) }
+        scope.launch {
+            runCatching { store.load() }.getOrNull()?.let { (profiles, account) ->
+                _profiles.value = profiles
+                _account.value = account
+            }
+        }
     }
 
     /** Null when the system already allows this app to open a VPN; else the consent screen to show once. */
     fun prepareIntent(): Intent? = android.net.VpnService.prepare(context)
 
     val activeProfile: Profile? get() = _profiles.value.firstOrNull { it.id == _activeId.value }
+
+    /** True when the active choice is the Surfshark account. */
+    val surfsharkActive: Boolean get() = _activeId.value == SURFSHARK_ID && _account.value != null
+
+    /** Something to connect with: a profile, or the Surfshark account. */
+    val hasActive: Boolean get() = activeProfile != null || surfsharkActive
+
+    // ---- profiles from a .conf -------------------------------------------------------------------
 
     /** Validates [text] as a WireGuard configuration and saves it; the new profile becomes active. */
     suspend fun importConfig(text: String, suggestedName: String? = null): Result<Profile> = withContext(Dispatchers.IO) {
@@ -103,7 +146,7 @@ class PoterxVpn(private val context: Context) {
             val profile = Profile(UUID.randomUUID().toString(), name, endpoint, text.trim(), System.currentTimeMillis())
             lock.withLock {
                 val next = _profiles.value + profile
-                store.save(next)
+                store.save(next, _account.value)
                 _profiles.value = next
                 setActive(profile.id)
             }
@@ -125,11 +168,11 @@ class PoterxVpn(private val context: Context) {
         scope.launch {
             lock.withLock {
                 val next = _profiles.value.filterNot { it.id == id }
-                runCatching { store.save(next) }
+                runCatching { store.save(next, _account.value) }
                 _profiles.value = next
                 if (_activeId.value == id) {
                     if (_state.value !is State.Off) disconnectNow()
-                    val fallback = next.firstOrNull()?.id
+                    val fallback = next.firstOrNull()?.id ?: if (_account.value != null) SURFSHARK_ID else null
                     prefs.edit().putString(KEY_ACTIVE, fallback).apply()
                     _activeId.value = fallback
                 }
@@ -137,16 +180,128 @@ class PoterxVpn(private val context: Context) {
         }
     }
 
-    /** Brings the active profile up. The consent screen must have been accepted ([prepareIntent] null). */
+    // ---- Surfshark account -----------------------------------------------------------------------
+
+    /** Signs in; [SignIn.NeedsCode] means [surfsharkCode] must follow with the authenticator's code. */
+    suspend fun surfsharkSignIn(email: String, password: String): SignIn {
+        return when (val result = runCatching { surfshark.login(email, password) }.getOrNull()) {
+            is SurfsharkClient.Login.Ok -> { finishSignIn(email, result.tokens); SignIn.Ok }
+            is SurfsharkClient.Login.NeedsCode -> { pendingCode = result.interim; pendingEmail = email; SignIn.NeedsCode }
+            else -> SignIn.Rejected
+        }
+    }
+
+    suspend fun surfsharkCode(code: String): SignIn {
+        val interim = pendingCode ?: return SignIn.Rejected
+        val tokens = runCatching { surfshark.activate(interim, code) }.getOrNull() ?: return SignIn.Rejected
+        pendingCode = null
+        finishSignIn(pendingEmail, tokens)
+        return SignIn.Ok
+    }
+
+    private suspend fun finishSignIn(email: String, tokens: SurfsharkClient.Tokens) {
+        val keys = KeyPair()
+        val account = SurfsharkAccount(
+            email = email.trim(),
+            token = tokens.token,
+            renewToken = tokens.renewToken,
+            privateKey = keys.privateKey.toBase64(),
+            publicKey = keys.publicKey.toBase64(),
+            keyExpiresAt = null,
+            countryCode = _account.value?.countryCode ?: Locale.getDefault().country.ifBlank { DEFAULT_COUNTRY },
+            lastServer = "",
+        )
+        lock.withLock {
+            store.save(_profiles.value, account)
+            _account.value = account
+        }
+        setActive(SURFSHARK_ID)
+    }
+
+    fun surfsharkSignOut() {
+        scope.launch {
+            lock.withLock {
+                if (_activeId.value == SURFSHARK_ID && _state.value !is State.Off) disconnectNow()
+                runCatching { store.save(_profiles.value, null) }
+                _account.value = null
+                if (_activeId.value == SURFSHARK_ID) {
+                    val fallback = _profiles.value.firstOrNull()?.id
+                    prefs.edit().putString(KEY_ACTIVE, fallback).apply()
+                    _activeId.value = fallback
+                }
+            }
+        }
+    }
+
+    fun setSurfsharkCountry(countryCode: String) {
+        scope.launch {
+            lock.withLock {
+                val account = _account.value ?: return@launch
+                val next = account.copy(countryCode = countryCode.uppercase())
+                runCatching { store.save(_profiles.value, next) }
+                _account.value = next
+            }
+            if (_activeId.value == SURFSHARK_ID && _state.value !is State.Off) { disconnect(); connect() }
+        }
+    }
+
+    /** The server list, fetched once per process (the country picker and server choice read it). */
+    suspend fun loadClusters(): List<SurfsharkClient.Cluster> {
+        _clusters.value.takeIf { it.isNotEmpty() }?.let { return it }
+        val list = runCatching { surfshark.clusters() }.getOrDefault(emptyList())
+        if (list.isNotEmpty()) _clusters.value = list
+        return list
+    }
+
+    /**
+     * The configuration for the Surfshark account: the key registered or renewed (a fresh pair when
+     * Surfshark forgot the old one), the least loaded server of the chosen country. Null with the
+     * failure to show when any step is refused.
+     */
+    private suspend fun surfsharkConfig(): Pair<String?, Failure?> {
+        var account = _account.value ?: return null to Failure.ACCOUNT
+        var tokens = SurfsharkClient.Tokens(account.token, account.renewToken)
+        var status = surfshark.registerKey(tokens, account.publicKey)
+        if (status is SurfsharkClient.KeyStatus.Unauthorized) {
+            tokens = surfshark.renew(tokens) ?: return null to Failure.ACCOUNT
+            account = account.copy(token = tokens.token, renewToken = tokens.renewToken)
+            status = surfshark.registerKey(tokens, account.publicKey)
+        }
+        if (status is SurfsharkClient.KeyStatus.Expired) {
+            val keys = KeyPair()
+            account = account.copy(privateKey = keys.privateKey.toBase64(), publicKey = keys.publicKey.toBase64())
+            status = surfshark.registerKey(tokens, account.publicKey)
+        }
+        when (status) {
+            is SurfsharkClient.KeyStatus.Valid -> account = account.copy(keyExpiresAt = status.expiresAt)
+            is SurfsharkClient.KeyStatus.Unauthorized -> return null to Failure.ACCOUNT
+            else -> return null to Failure.SERVERS
+        }
+        val cluster = SurfsharkClient.pick(loadClusters(), account.countryCode) ?: return null to Failure.SERVERS
+        account = account.copy(lastServer = cluster.location.ifBlank { cluster.connectionName })
+        runCatching { store.save(_profiles.value, account) }
+        _account.value = account
+        return SurfsharkClient.buildConfig(account.privateKey, cluster) to null
+    }
+
+    // ---- the tunnel ------------------------------------------------------------------------------
+
+    /** Brings the active choice up. The consent screen must have been accepted ([prepareIntent] null). */
     fun connect() {
-        val profile = activeProfile
-        if (profile == null) { _state.value = State.Failed(Failure.NO_PROFILE); return }
+        if (!hasActive) { _state.value = State.Failed(Failure.NO_PROFILE); return }
         if (prepareIntent() != null) { _state.value = State.Failed(Failure.NOT_AUTHORIZED); return }
         _state.value = State.Connecting
         scope.launch {
             lock.withLock {
                 try {
-                    val config = parse(withAppRouting(profile.config, context.packageName))
+                    val text = if (surfsharkActive) {
+                        val (config, failure) = surfsharkConfig()
+                        if (config == null) { _state.value = State.Failed(failure ?: Failure.UNKNOWN); return@withLock }
+                        config
+                    } else {
+                        activeProfile?.config ?: run { _state.value = State.Failed(Failure.NO_PROFILE); return@withLock }
+                    }
+                    val config = parse(withAppRouting(text, context.packageName))
                     backend.setState(tunnel, Tunnel.State.UP, config)
                     connectedAt = System.currentTimeMillis()
                     _state.value = State.On(connectedAt, 0L, 0L, 0L)
@@ -179,31 +334,40 @@ class PoterxVpn(private val context: Context) {
         _state.value = State.Off
     }
 
-    /** At app start: the active profile comes up by itself when the switch is on and consent was given. */
+    /** At app start: the active choice comes up by itself when the switch is on and consent was given. */
     fun autoConnectIfReady() {
         if (!_autoConnect.value) return
         scope.launch {
-            // The profiles load asynchronously; give the store a moment before deciding there is none.
-            repeat(20) { if (_profiles.value.isNotEmpty()) return@repeat; delay(100) }
-            if (activeProfile != null && prepareIntent() == null && _state.value is State.Off) connect()
+            // The store loads asynchronously; give it a moment before deciding there is nothing to connect.
+            repeat(20) { if (hasActive) return@repeat; delay(100) }
+            if (hasActive && prepareIntent() == null && _state.value is State.Off) connect()
         }
     }
 
     private fun startStats() {
         statsJob?.cancel()
         statsJob = scope.launch {
+            var silentSince = 0L
             while (isActive) {
                 delay(STATS_PERIOD_MS)
                 val stats = runCatching { backend.getStatistics(tunnel) }.getOrNull() ?: continue
                 val handshake = stats.peers().maxOfOrNull { stats.peer(it)?.latestHandshakeEpochMillis() ?: 0L } ?: 0L
                 if (_state.value is State.On) _state.value = State.On(connectedAt, handshake, stats.totalRx(), stats.totalTx())
+                // Surfshark forgets a key after some days; the tunnel then stays up but the server goes
+                // silent. One reconnect re-registers the key and moves to a live server.
+                val now = System.currentTimeMillis()
+                val silent = now - connectedAt > HANDSHAKE_GRACE_MS && now - handshake > HANDSHAKE_STALE_MS
+                if (silent && surfsharkActive) {
+                    if (silentSince == 0L) silentSince = now
+                    if (now - silentSince > HANDSHAKE_STALE_MS) { silentSince = 0L; lock.withLock { disconnectNow() }; connect(); return@launch }
+                } else silentSince = 0L
             }
         }
     }
 
     private fun parse(text: String): Config = Config.parse(ByteArrayInputStream(text.toByteArray()))
 
-    // ---- encrypted profile store ----------------------------------------------------------------
+    // ---- encrypted store -------------------------------------------------------------------------
 
     private val store = object {
         private val file get() = File(context.filesDir, STORE_DIR).apply { mkdirs() }.resolve(STORE_FILE)
@@ -222,28 +386,47 @@ class PoterxVpn(private val context: Context) {
             return generator.generateKey()
         }
 
-        fun load(): List<Profile> {
+        fun load(): Pair<List<Profile>, SurfsharkAccount?> {
             val f = file
-            if (!f.exists()) return emptyList()
+            if (!f.exists()) return emptyList<Profile>() to null
             val bytes = f.readBytes()
-            if (bytes.size < GCM_IV_BYTES + 1) return emptyList()
+            if (bytes.size < GCM_IV_BYTES + 1) return emptyList<Profile>() to null
             val cipher = Cipher.getInstance(CIPHER)
             cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(GCM_TAG_BITS, bytes, 0, GCM_IV_BYTES))
-            val json = JSONArray(String(cipher.doFinal(bytes, GCM_IV_BYTES, bytes.size - GCM_IV_BYTES), Charsets.UTF_8))
-            return (0 until json.length()).map { i ->
-                val o = json.getJSONObject(i)
+            val text = String(cipher.doFinal(bytes, GCM_IV_BYTES, bytes.size - GCM_IV_BYTES), Charsets.UTF_8)
+            // The first release wrote a bare array of profiles.
+            val root = if (text.trimStart().startsWith("[")) JSONObject().put("profiles", JSONArray(text)) else JSONObject(text)
+            val list = root.optJSONArray("profiles") ?: JSONArray()
+            val profiles = (0 until list.length()).map { i ->
+                val o = list.getJSONObject(i)
                 Profile(o.getString("id"), o.getString("name"), o.optString("endpoint"), o.getString("config"), o.optLong("createdAt"))
             }
+            val account = root.optJSONObject("surfshark")?.let { o ->
+                SurfsharkAccount(
+                    o.getString("email"), o.getString("token"), o.getString("renewToken"), o.getString("privateKey"), o.getString("publicKey"),
+                    o.optString("keyExpiresAt").takeIf { it.isNotBlank() }, o.optString("countryCode").ifBlank { DEFAULT_COUNTRY }, o.optString("lastServer"),
+                )
+            }
+            return profiles to account
         }
 
-        fun save(profiles: List<Profile>) {
-            val json = JSONArray()
+        fun save(profiles: List<Profile>, account: SurfsharkAccount?) {
+            val list = JSONArray()
             profiles.forEach { p ->
-                json.put(JSONObject().put("id", p.id).put("name", p.name).put("endpoint", p.endpoint).put("config", p.config).put("createdAt", p.createdAt))
+                list.put(JSONObject().put("id", p.id).put("name", p.name).put("endpoint", p.endpoint).put("config", p.config).put("createdAt", p.createdAt))
+            }
+            val root = JSONObject().put("profiles", list)
+            account?.let { a ->
+                root.put(
+                    "surfshark",
+                    JSONObject().put("email", a.email).put("token", a.token).put("renewToken", a.renewToken)
+                        .put("privateKey", a.privateKey).put("publicKey", a.publicKey).put("keyExpiresAt", a.keyExpiresAt ?: "")
+                        .put("countryCode", a.countryCode).put("lastServer", a.lastServer),
+                )
             }
             val cipher = Cipher.getInstance(CIPHER)
             cipher.init(Cipher.ENCRYPT_MODE, key())
-            val out = cipher.iv + cipher.doFinal(json.toString().toByteArray(Charsets.UTF_8))
+            val out = cipher.iv + cipher.doFinal(root.toString().toByteArray(Charsets.UTF_8))
             val f = file
             val tmp = File(f.parentFile, f.name + ".tmp")
             tmp.writeBytes(out)
@@ -252,6 +435,9 @@ class PoterxVpn(private val context: Context) {
     }
 
     companion object {
+        /** The active-choice id that stands for the Surfshark account rather than a saved file. */
+        const val SURFSHARK_ID = "surfshark"
+        private const val DEFAULT_COUNTRY = "PL"
         private const val TUNNEL_NAME = "poterx"
         private const val PREFS = "poterx_vpn"
         private const val KEY_ACTIVE = "active"
@@ -264,6 +450,8 @@ class PoterxVpn(private val context: Context) {
         private const val GCM_IV_BYTES = 12
         private const val GCM_TAG_BITS = 128
         private const val STATS_PERIOD_MS = 3_000L
+        private const val HANDSHAKE_GRACE_MS = 60_000L
+        private const val HANDSHAKE_STALE_MS = 180_000L
 
         /**
          * The configuration with this app as the only routed application, unless the file already

@@ -969,25 +969,87 @@
 1	json	app/src/main/java/tv/own/owntv/poterx/PoterxUpdater.kt	versionCode
 1	json	app/src/main/java/tv/own/owntv/poterx/PoterxUpdater.kt	versionName
 2	empty	app/src/main/java/tv/own/owntv/poterx/PoterxZapBanner.kt	\0
-6	empty	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	\0
+9	empty	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	.tmp
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	AES/GCM/NoPadding
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	AndroidKeyStore
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	IncludedApplications = $packageName
+1	locale	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	PL
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	[
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	[Interface]
 1	preference-key	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	active
 1	preference-key	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	auto_connect
 2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	config
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	countryCode
 2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	createdAt
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	email
 2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	endpoint
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	excludedapplications
 2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	id
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	includedapplications
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	keyExpiresAt
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	lastServer
 2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	name
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	poterx
 2	preference-key	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	poterx_vpn
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	poterx_vpn_v1
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	privateKey
+3	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	profiles
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	profiles.bin
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	publicKey
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	renewToken
+3	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	surfshark
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/PoterxVpn.kt	token
+1	empty	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	\0
+1	url	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	/v1/account/users/public-keys
+1	url	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	/v1/account/users/public-keys/validate
+1	url	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	/v1/auth/activate
+1	url	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	/v1/auth/login
+1	url	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	/v1/auth/renew
+1	url	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	/v5/server/clusters/all
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	10.14.0.2/16
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	162.252.172.57, 149.154.159.92
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	3.14.0
+1	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	Accept
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	Address =
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	AllowedIPs = 0.0.0.0/0, ::/0
+1	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	Authorization
+1	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	Bearer $bearer
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	DNS =
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	Endpoint =
+1	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	GET
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	MTU = 1280
+6	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	POST
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	PersistentKeepalive = 25
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	PrivateKey =
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	PublicKey =
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	SurfsharkLinux/3.14.0 device/desktop
+1	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	User-Agent
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	[Interface]
+1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	[Peer]
+2	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	application/json
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	connectionName
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	country
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	countryCode
+1	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	desktop
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	expiresAt
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	generic
+1	url	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	https://api.surfshark.com
+1	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	linux
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	load
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	location
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	null
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	otp
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	password
+2	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	pubKey
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	renewToken
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	token
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	type
+1	json	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	username
+1	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	x-device-platform
+1	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	x-device-type
+1	protocol	app/src/main/java/tv/own/owntv/poterx/vpn/Surfshark.kt	x-device-version
+6	empty	app/src/main/java/tv/own/owntv/poterx/vpn/VpnSettingsScreen.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/poterx/vpn/VpnSettingsScreen.kt	conf
 1	file-path	app/src/main/java/tv/own/owntv/ui/components/BackgroundImageChooserDialog.kt	background_${System.currentTimeMillis()}.$ext
 1	file-path	app/src/main/java/tv/own/owntv/ui/components/BackgroundImageChooserDialog.kt	png

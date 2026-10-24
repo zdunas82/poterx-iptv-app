@@ -3,6 +3,10 @@ package tv.own.owntv.poterx.vpn
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,14 +17,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import tv.own.owntv.R
 import tv.own.owntv.features.settings.SettingValue
+import tv.own.owntv.features.settings.StageFieldRow
 import tv.own.owntv.features.settings.StageFullPage
 import tv.own.owntv.features.settings.StageSettingRow
 import tv.own.owntv.features.settings.StageSettingsNote
@@ -29,31 +36,49 @@ import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.components.StorageBrowser
 import tv.own.owntv.ui.components.TextInputDialog
 import tv.own.owntv.ui.stage.StageConfirm
+import tv.own.owntv.ui.stage.StagePopup
+import tv.own.owntv.ui.theme.mpx
+import java.util.Locale
 
 /** This screen's rows as Settings search finds them. */
-internal val VPN_SEARCH_ROWS: List<Int> =
-    listOf(R.string.settings_vpn_connect, R.string.settings_vpn_import_file, R.string.settings_vpn_paste, R.string.settings_vpn_auto_connect)
+internal val VPN_SEARCH_ROWS: List<Int> = listOf(
+    R.string.settings_vpn_connect, R.string.settings_vpn_surfshark_login, R.string.settings_vpn_surfshark_location,
+    R.string.settings_vpn_import_file, R.string.settings_vpn_paste, R.string.settings_vpn_auto_connect,
+)
 
 /**
- * Poterx: Settings › Network › VPN. Saved WireGuard profiles, import from a `.conf` file or pasted
- * text, connect and disconnect with a live status line, and connect-on-start. The tunnel carries
- * this app only; an external player is outside it.
+ * Poterx: Settings › Network › VPN. A Surfshark account (sign in, pick a country, the app does the
+ * rest) or saved WireGuard profiles from a `.conf` file or pasted text; connect and disconnect with
+ * a live status line, and connect-on-start. The tunnel carries this app only.
  */
 @Composable
 fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val vpn: PoterxVpn = koinInject()
     val context = LocalContext.current
+    val locale = LocalConfiguration.current.locales[0]
     val scope = rememberCoroutineScope()
     val profiles by vpn.profiles.collectAsStateWithLifecycle()
+    val account by vpn.account.collectAsStateWithLifecycle()
     val activeId by vpn.activeId.collectAsStateWithLifecycle()
     val autoConnect by vpn.autoConnect.collectAsStateWithLifecycle()
     val state by vpn.state.collectAsStateWithLifecycle()
-    val active = profiles.firstOrNull { it.id == activeId }
+    val clusters by vpn.clusters.collectAsStateWithLifecycle()
+    val activeProfile = profiles.firstOrNull { it.id == activeId }
+    val surfsharkActive = activeId == PoterxVpn.SURFSHARK_ID && account != null
+    val hasActive = activeProfile != null || surfsharkActive
 
     var importFile by remember { mutableStateOf(false) }
     var pasteConfig by remember { mutableStateOf(false) }
     var deleteId by remember { mutableStateOf<String?>(null) }
     var importError by remember { mutableStateOf(false) }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var signingIn by remember { mutableStateOf(false) }
+    var signInError by remember { mutableStateOf(false) }
+    var askCode by remember { mutableStateOf(false) }
+    var codeError by remember { mutableStateOf(false) }
+    var pickCountry by remember { mutableStateOf(false) }
+    var confirmSignOut by remember { mutableStateOf(false) }
 
     val first = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { first.requestFocus() } }
@@ -62,15 +87,17 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) vpn.connect()
     }
+    val connectNow = {
+        val intent = vpn.prepareIntent()
+        if (intent != null) consent.launch(intent) else vpn.connect()
+    }
     val toggle = {
         when (state) {
-            is PoterxVpn.State.Off, is PoterxVpn.State.Failed -> {
-                val intent = vpn.prepareIntent()
-                if (intent != null) consent.launch(intent) else vpn.connect()
-            }
+            is PoterxVpn.State.Off, is PoterxVpn.State.Failed -> connectNow()
             else -> vpn.disconnect()
         }
     }
+    fun countryName(code: String): String = Locale("", code).getDisplayCountry(locale).ifBlank { code }
 
     val connected = state is PoterxVpn.State.On
     val statusText = when (val s = state) {
@@ -93,12 +120,24 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 PoterxVpn.Failure.NO_PROFILE -> R.string.settings_vpn_error_no_profile
                 PoterxVpn.Failure.BAD_CONFIG -> R.string.settings_vpn_error_config
                 PoterxVpn.Failure.DNS -> R.string.settings_vpn_error_dns
+                PoterxVpn.Failure.ACCOUNT -> R.string.settings_vpn_error_account
+                PoterxVpn.Failure.SERVERS -> R.string.settings_vpn_error_servers
                 PoterxVpn.Failure.START, PoterxVpn.Failure.UNKNOWN -> R.string.settings_vpn_error_start
             },
         )
     }
+    val activeName = when {
+        surfsharkActive -> stringResource(R.string.settings_vpn_surfshark_name, countryName(account?.countryCode.orEmpty()))
+        activeProfile != null -> activeProfile.name
+        else -> null
+    }
+    val endpointText = when {
+        !connected -> ""
+        surfsharkActive -> account?.lastServer.orEmpty()
+        else -> activeProfile?.endpoint.orEmpty()
+    }
 
-    val rowCount = 5 + profiles.size
+    val rowCount = 5 + profiles.size + (if (account != null) 2 else 3)
     StageFullPage(
         parents = listOf(stringResource(R.string.settings_group_app), stringResource(R.string.settings_group_network)),
         title = stringResource(R.string.settings_vpn),
@@ -110,20 +149,73 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         StageSettingRow(
             icon = OwnTVIcon.NETWORK,
             title = stringResource(R.string.settings_vpn_connect),
-            desc = active?.let { stringResource(R.string.settings_vpn_connect_description, it.name) }
+            desc = activeName?.let { stringResource(R.string.settings_vpn_connect_description, it) }
                 ?: stringResource(R.string.settings_vpn_connect_no_profile),
             value = SettingValue.Switch(connected || state is PoterxVpn.State.Connecting),
             onClick = toggle,
-            enabled = active != null,
+            enabled = hasActive,
             modifier = Modifier.focusRequester(first),
         )
         StageSettingRow(
             icon = OwnTVIcon.INFO,
             title = stringResource(R.string.settings_vpn_status),
             desc = statusText,
-            value = SettingValue.Saved(active?.endpoint?.takeIf { connected }.orEmpty(), any = false),
+            value = SettingValue.Saved(endpointText, any = false),
             onClick = {},
         )
+
+        // ---- Surfshark: sign in once, the app registers its key and picks a server ----
+        val signedIn = account
+        if (signedIn == null) {
+            StageSettingsNote(stringResource(R.string.settings_vpn_surfshark_title), stringResource(R.string.settings_vpn_surfshark_intro))
+            val emailLabel = stringResource(R.string.settings_vpn_surfshark_email)
+            StageFieldRow(OwnTVIcon.PENCIL, emailLabel, email, { email = it }, keyboardType = KeyboardType.Email)
+            val passLabel = stringResource(R.string.settings_vpn_surfshark_password)
+            StageFieldRow(OwnTVIcon.PENCIL, passLabel, password, { password = it }, password = true)
+            StageSettingRow(
+                icon = OwnTVIcon.PERSON,
+                title = stringResource(if (signingIn) R.string.settings_vpn_surfshark_signing_in else R.string.settings_vpn_surfshark_login),
+                desc = if (signInError) stringResource(R.string.settings_vpn_error_login) else stringResource(R.string.settings_vpn_surfshark_login_description),
+                value = SettingValue.Action(stringResource(R.string.settings_vpn_surfshark_login_short)),
+                enabled = !signingIn && email.isNotBlank() && password.isNotBlank(),
+                onClick = {
+                    signInError = false
+                    signingIn = true
+                    scope.launch {
+                        when (vpn.surfsharkSignIn(email, password)) {
+                            PoterxVpn.SignIn.Ok -> { password = ""; connectNow() }
+                            PoterxVpn.SignIn.NeedsCode -> { codeError = false; askCode = true }
+                            PoterxVpn.SignIn.Rejected -> signInError = true
+                        }
+                        signingIn = false
+                    }
+                },
+            )
+        } else {
+            StageSettingRow(
+                icon = OwnTVIcon.PERSON,
+                title = stringResource(R.string.settings_vpn_surfshark_title),
+                desc = stringResource(R.string.settings_vpn_surfshark_signed_in, signedIn.email),
+                value = SettingValue.Choice(stringResource(if (surfsharkActive) R.string.settings_vpn_profile_active else R.string.settings_vpn_profile_use)),
+                onClick = {
+                    if (!surfsharkActive) {
+                        val wasOn = state !is PoterxVpn.State.Off
+                        vpn.setActive(PoterxVpn.SURFSHARK_ID)
+                        if (wasOn) { vpn.disconnect(); vpn.connect() }
+                    }
+                },
+                onLongClick = { confirmSignOut = true },
+            )
+            StageSettingRow(
+                icon = OwnTVIcon.LIST,
+                title = stringResource(R.string.settings_vpn_surfshark_location),
+                desc = stringResource(R.string.settings_vpn_surfshark_location_description),
+                value = SettingValue.Choice(countryName(signedIn.countryCode)),
+                onClick = { pickCountry = true; scope.launch { vpn.loadClusters() } },
+            )
+        }
+
+        // ---- saved .conf profiles ----
         profiles.forEach { profile ->
             StageSettingRow(
                 icon = OwnTVIcon.LIST,
@@ -160,7 +252,7 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             desc = stringResource(R.string.settings_vpn_auto_connect_description),
             value = SettingValue.Switch(autoConnect),
             onClick = { vpn.setAutoConnect(!autoConnect) },
-            enabled = active != null,
+            enabled = hasActive,
         )
         if (importError) StageSettingsNote(stringResource(R.string.settings_vpn_error_config), null)
         StageSettingsNote(stringResource(R.string.settings_vpn_note_title), stringResource(R.string.settings_vpn_note_body))
@@ -197,6 +289,48 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             onDismiss = { pasteConfig = false },
         )
     }
+    if (askCode) {
+        TextInputDialog(
+            title = stringResource(if (codeError) R.string.settings_vpn_error_otp else R.string.settings_vpn_surfshark_otp_title),
+            label = stringResource(R.string.settings_vpn_surfshark_otp_label),
+            confirmLabel = stringResource(R.string.settings_vpn_surfshark_login_short),
+            allowBlank = false,
+            onConfirm = { code ->
+                scope.launch {
+                    when (vpn.surfsharkCode(code)) {
+                        PoterxVpn.SignIn.Ok -> { askCode = false; password = ""; connectNow() }
+                        else -> codeError = true
+                    }
+                }
+            },
+            onDismiss = { askCode = false },
+        )
+    }
+    if (pickCountry) {
+        val countries = remember(clusters) {
+            clusters.groupBy { it.countryCode }.map { (code, list) -> code to list.minOf { it.load } }
+                .sortedBy { countryName(it.first) }
+        }
+        StagePopup(
+            onDismiss = { pickCountry = false },
+            title = stringResource(R.string.settings_vpn_surfshark_location),
+            body = if (countries.isEmpty()) stringResource(R.string.settings_vpn_loading) else stringResource(R.string.settings_vpn_surfshark_location_description),
+            width = 760.mpx,
+            scroll = false,
+        ) {
+            Column(Modifier.heightIn(max = 620.mpx).verticalScroll(rememberScrollState())) {
+                countries.forEach { (code, load) ->
+                    StageSettingRow(
+                        icon = OwnTVIcon.NETWORK,
+                        title = countryName(code),
+                        desc = stringResource(R.string.settings_vpn_surfshark_load, load),
+                        value = if (code.equals(account?.countryCode, ignoreCase = true)) SettingValue.Choice(stringResource(R.string.settings_vpn_profile_active)) else null,
+                        onClick = { vpn.setSurfsharkCountry(code); pickCountry = false },
+                    )
+                }
+            }
+        }
+    }
     deleteId?.let { id ->
         val profile = profiles.firstOrNull { it.id == id }
         StageConfirm(
@@ -205,6 +339,16 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             confirm = stringResource(R.string.common_delete),
             onConfirm = { vpn.delete(id); deleteId = null },
             onCancel = { deleteId = null },
+            focusCancel = true,
+        )
+    }
+    if (confirmSignOut) {
+        StageConfirm(
+            title = stringResource(R.string.settings_vpn_surfshark_logout_title),
+            body = stringResource(R.string.settings_vpn_surfshark_logout_body),
+            confirm = stringResource(R.string.settings_vpn_surfshark_logout),
+            onConfirm = { vpn.surfsharkSignOut(); confirmSignOut = false },
+            onCancel = { confirmSignOut = false },
             focusCancel = true,
         )
     }
