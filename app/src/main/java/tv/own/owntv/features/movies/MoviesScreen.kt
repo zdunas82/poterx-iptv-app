@@ -213,8 +213,10 @@ fun MoviesScreen(
     val gridTopFade = Modifier.drawWithContent {
         drawContent()
         drawRect(
-            androidx.compose.ui.graphics.Brush.verticalGradient(0f to gridPage, 1f to gridPage.copy(alpha = 0f), endY = 56.mpx.toPx()),
-            size = androidx.compose.ui.geometry.Size(size.width, 56.mpx.toPx()),
+            // Poterx: rows align under the 14 px top padding, so the fade covers only that padding;
+            // a taller one dimmed the top of the focused row.
+            androidx.compose.ui.graphics.Brush.verticalGradient(0f to gridPage, 1f to gridPage.copy(alpha = 0f), endY = 14.mpx.toPx()),
+            size = androidx.compose.ui.geometry.Size(size.width, 14.mpx.toPx()),
         )
     }
     // Poterx: while a search is typed the header counts the results once they are all in, not the
@@ -632,7 +634,9 @@ fun MoviesScreen(
                         // A fixed gap under the toolbar that scrolling posters never enter; the grid's own
                         // top padding is only the room the focused poster's lift and ring need.
                         Spacer(Modifier.height(14.mpx))
-                        CompositionLocalProvider(LocalBringIntoViewSpec provides rowAlignScrollSpec) {
+                        val density = androidx.compose.ui.platform.LocalDensity.current
+                        val rowSpec = remember(density) { rowAlignScrollSpec(with(density) { 14.mpx.toPx() }) }
+                        CompositionLocalProvider(LocalBringIntoViewSpec provides rowSpec) {
                             LazyVerticalGrid(
                                 state = effectiveGridState,
                                 columns = GridCells.Fixed(columns),

@@ -1112,8 +1112,16 @@ class LiveViewModel(
 
     /** A built-in rail for the in-player category sheet, bounded like every zap list and with the hide /
      *  rename treatment the browsing lists get. */
+    /**
+     * Poterx: the profile context, waited for briefly. A launcher deep link on a cold start arms the
+     * zap list before [ctx] has emitted its first profile; the loader then saw no profile, returned
+     * nothing and CH+/CH− stayed dead until the next channel change.
+     */
+    private suspend fun readyCtx(): Ctx =
+        kotlinx.coroutines.withTimeoutOrNull(CTX_WAIT_MS) { ctx.first { it.profileId >= 0 } } ?: ctx.value
+
     private suspend fun channelsInRail(key: LiveKey): List<ChannelEntity> {
-        val c = ctx.value
+        val c = readyCtx()
         if (c.profileId < 0) return emptyList()
         if (key == LiveKey.History) return historyChannels(ZAP_LIST_LIMIT).map { it.channel }
         val sources = c.sourceIds.ifEmpty { listOf(-1L) }
@@ -1133,7 +1141,7 @@ class LiveViewModel(
 
     /** One custom category in its rail order, with the hide/rename treatment the Live list gives it. */
     private suspend fun channelsInCustom(key: LiveKey.Custom): List<ChannelEntity> {
-        val c = ctx.value
+        val c = readyCtx()
         if (c.profileId < 0) return emptyList()
         val cs = custResolved.value
         return withContext(Dispatchers.IO) {
@@ -1160,7 +1168,7 @@ class LiveViewModel(
                 channelDao.snapshotByCategoryManual(catId, pid, folderContextKeys.value[catId] ?: "", ZAP_LIST_LIMIT)
             } else {
                 // No category on this row (hand-made M3U entries) — fall back to All Channels.
-                channelDao.snapshotAll(ctx.value.sourceIds.ifEmpty { listOf(-1L) }, ZAP_LIST_LIMIT)
+                channelDao.snapshotAll(readyCtx().sourceIds.ifEmpty { listOf(-1L) }, ZAP_LIST_LIMIT)
             }
         }
         val cust = custom.value
@@ -2259,6 +2267,8 @@ class LiveViewModel(
         // In-player channel lists: one category is normally far smaller, but cap the uncategorized
         // → All Channels fallback so a huge playlist can't be pulled into memory on every tune.
         const val ZAP_LIST_LIMIT = 2_000
+        /** How long a zap-list loader waits for the profile context at a cold start. */
+        private const val CTX_WAIT_MS = 5_000L
 
         // The CH+/- timing constants (ZAP_TUNE_DELAY_MS, ZAP_ISOLATED_PRESS_MS) live in ZapTuneDelay.kt.
         const val HISTORY_LIST_LIMIT = 30

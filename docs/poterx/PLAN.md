@@ -70,7 +70,23 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 - **v0.2.7** (w toku): karta aktualizacji bez adresów GitHuba w opisie wydania (linki i wiersze
   „Full Changelog” wycinane w wersji zamkniętej); plan VPS pod aktualizacje (`VPS.md`); propozycja
   Info bar 2 zapisana w planie.
-- **v0.3.3** (w toku, pre-release do testów na Shieldzie): VPN w aplikacji (Ustawienia › Sieć › VPN): tunel WireGuard (biblioteka
+- **v0.3.4** (w toku, po audycie v0.3.3): VPN pokazuje prędkość (↓/↑ b/s), dane tego połączenia i
+  sumę w miesiącu (zapis w `poterx_vpn`, reset z nowym miesiącem); stan „Tunel gotowy, czekam na
+  odpowiedź serwera” zamiast „Połączono”, dopóki nie ma pierwszego handshake’u (świeży klucz
+  Surfshark potrzebuje do kilku minut); polskie nazwy miast serwerów. Siatki filmów/seriali: spec
+  przewijania zawsze dosuwa fokusowany rząd pod górne wcięcie (poprzedni spec zwracał 0, gdy rząd był
+  już w całości widoczny, więc animacja stawała przy dolnej krawędzi i podpisy poprzedniego rzędu
+  zostawały pod paskiem); fade siatki filmów zmniejszony do wcięcia. Zimny start z deep linka: loadery
+  listy zappingu czekają (do 5 s) na kontekst profilu, bo bez niego CH± było martwe. `onStart` łapie
+  `SecurityException` z wznowienia (jednorazowy crash przy pełnej pamięci i włączonym VPN).
+  Instrukcja: przykład kanału startowego „TVN 24” (ze spacją). **Ryzyka z audytu, do decyzji**:
+  kill switch w aplikacji (wstrzymanie ruchu OkHttp/odtwarzacza, gdy suwak VPN włączony, a tunel bez
+  handshake’u; strumienie odtwarzacza idą przez core, więc tylko częściowo); konto Surfshark w APK
+  jest wspólne dla klientów i do odzyskania z blobu — alternatywa to pośrednik na VPS wydający
+  konfiguracje WireGuard po zalogowaniu danymi panelu; API Surfshark nieoficjalne. Wyciek IPv6:
+  `AllowedIPs ::/0` dodaje trasę IPv6 do tunelu bez adresu IPv6, więc ruch IPv6 aplikacji trafia do
+  tunelu i ginie (blackhole) — do potwierdzenia na Shieldzie z IPv6 u ISP.
+- **v0.3.3** (2026‑10‑24, tag 5ff0345, kanał testowy; audyt: VPN działa, tylko UID aplikacji): VPN w aplikacji (Ustawienia › Sieć › VPN): tunel WireGuard (biblioteka
   `com.wireguard.android:tunnel`) tylko dla pakietu Poterx, import profilu z pliku `.conf` lub
   wklejonego tekstu (np. Surfshark › konfiguracja ręczna), zapisane profile szyfrowane kluczem z
   Android Keystore, Połącz/Rozłącz ze stanem (handshake, ruch), „Łącz przy starcie”. Bez systemowego

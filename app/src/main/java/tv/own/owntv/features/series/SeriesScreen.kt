@@ -665,7 +665,9 @@ private fun SeriesGrid(
                         // A fixed gap under the toolbar that scrolling posters never enter; the grid's own
                         // top padding is only the room the focused poster's lift and ring need.
                         Spacer(Modifier.height(14.mpx))
-                        CompositionLocalProvider(LocalBringIntoViewSpec provides rowAlignScrollSpec) {
+                        val density = androidx.compose.ui.platform.LocalDensity.current
+                        val rowSpec = remember(density) { rowAlignScrollSpec(with(density) { 14.mpx.toPx() }) }
+                        CompositionLocalProvider(LocalBringIntoViewSpec provides rowSpec) {
                             LazyVerticalGrid(
                                 state = effectiveGridState,
                                 columns = GridCells.Fixed(columns),

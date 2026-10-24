@@ -72,8 +72,20 @@
     <string name="settings_vpn_status">Stan</string>
     <string name="settings_vpn_status_off">Nie połączono</string>
     <string name="settings_vpn_status_connecting">Łączenie\u2026</string>
-    <string name="settings_vpn_status_on">Połączono · %1$s · \u2193 %2$s · \u2191 %3$s</string>
-    <string name="settings_vpn_handshake_none">czekam na odpowiedź serwera</string>
+    <string name="settings_vpn_status_on">Połączono · %1$s · %2$s</string>
+    <string name="settings_vpn_status_waiting">Tunel gotowy, czekam na odpowiedź serwera · pierwsze połączenie może potrwać kilka minut</string>
+    <plurals name="settings_vpn_connected_minutes">
+        <item quantity="one">od %1$d minuty</item>
+        <item quantity="few">od %1$d minut</item>
+        <item quantity="many">od %1$d minut</item>
+        <item quantity="other">od %1$d minuty</item>
+    </plurals>
+    <string name="settings_vpn_transfer">Prędkość i zużycie danych</string>
+    <string name="settings_vpn_transfer_now">Teraz \u2193 %1$s · \u2191 %2$s · to połączenie \u2193 %3$s · \u2191 %4$s</string>
+    <string name="settings_vpn_transfer_idle">Tunel w tej chwili nie działa</string>
+    <string name="settings_vpn_transfer_month">W tym miesiącu \u2193 %1$s · \u2191 %2$s</string>
+    <string name="settings_vpn_speed_mbps">%1$s Mb/s</string>
+    <string name="settings_vpn_speed_kbps">%1$s kb/s</string>
     <string name="settings_vpn_handshake_ago">serwer odpowiedział %1$d s temu</string>
     <string name="settings_vpn_error_permission">System nie zezwolił na VPN. Włącz przełącznik ponownie i zaakceptuj pytanie.</string>
     <string name="settings_vpn_error_no_profile">Brak profilu do połączenia</string>

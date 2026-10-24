@@ -42,9 +42,35 @@ import java.util.Locale
 
 /** This screen's rows as Settings search finds them. */
 internal val VPN_SEARCH_ROWS: List<Int> = listOf(
-    R.string.settings_vpn_connect, R.string.settings_vpn_surfshark_login, R.string.settings_vpn_surfshark_location,
-    R.string.settings_vpn_import_file, R.string.settings_vpn_paste, R.string.settings_vpn_auto_connect,
+    R.string.settings_vpn_connect, R.string.settings_vpn_transfer, R.string.settings_vpn_surfshark_login,
+    R.string.settings_vpn_surfshark_location, R.string.settings_vpn_import_file, R.string.settings_vpn_paste,
+    R.string.settings_vpn_auto_connect,
 )
+
+/**
+ * Surfshark names its locations in ASCII ("Gdansk"); the Polish spelling for the Polish cities,
+ * everything else as the server list has it.
+ */
+private val POLISH_CITIES = mapOf(
+    "Gdansk" to "Gdańsk", "Warsaw" to "Warszawa", "Poznan" to "Poznań", "Krakow" to "Kraków",
+    "Wroclaw" to "Wrocław", "Lodz" to "Łódź", "Szczecin" to "Szczecin", "Katowice" to "Katowice",
+)
+
+internal fun localizedServerName(name: String, locale: Locale): String =
+    if (locale.language == "pl") POLISH_CITIES[name] ?: name else name
+
+/** A rate in bits per second as the status shows it: "5,1 Mb/s" or "320 kb/s", in the locale's digits. */
+internal fun speedText(context: android.content.Context, locale: Locale, bitsPerSecond: Long): String {
+    val nf = java.text.NumberFormat.getNumberInstance(locale)
+    return if (bitsPerSecond >= 1_000_000L) {
+        nf.maximumFractionDigits = 1
+        nf.minimumFractionDigits = 1
+        context.getString(R.string.settings_vpn_speed_mbps, nf.format(bitsPerSecond / 1_000_000.0))
+    } else {
+        nf.maximumFractionDigits = 0
+        context.getString(R.string.settings_vpn_speed_kbps, nf.format(bitsPerSecond / 1_000.0))
+    }
+}
 
 /**
  * Poterx: Settings › Network › VPN. A Surfshark account (sign in, pick a country, the app does the
@@ -63,6 +89,7 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val autoConnect by vpn.autoConnect.collectAsStateWithLifecycle()
     val state by vpn.state.collectAsStateWithLifecycle()
     val clusters by vpn.clusters.collectAsStateWithLifecycle()
+    val usage by vpn.usage.collectAsStateWithLifecycle()
     val activeProfile = profiles.firstOrNull { it.id == activeId }
     val surfsharkActive = activeId == PoterxVpn.SURFSHARK_ID && account != null
     val hasActive = activeProfile != null || surfsharkActive
@@ -111,15 +138,18 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         PoterxVpn.State.Off -> stringResource(R.string.settings_vpn_status_off)
         PoterxVpn.State.Connecting -> stringResource(R.string.settings_vpn_status_connecting)
         is PoterxVpn.State.On -> {
-            val age = ((System.currentTimeMillis() - s.handshakeMs) / 1000L).toInt()
-            val handshake = if (s.handshakeMs <= 0L) stringResource(R.string.settings_vpn_handshake_none)
-            else stringResource(R.string.settings_vpn_handshake_ago, age.coerceAtLeast(0))
-            stringResource(
-                R.string.settings_vpn_status_on,
-                handshake,
-                android.text.format.Formatter.formatShortFileSize(context, s.rxBytes),
-                android.text.format.Formatter.formatShortFileSize(context, s.txBytes),
-            )
+            // The tunnel is up, but until the server has answered once nothing flows: a fresh key
+            // can take the server a few minutes to accept, so this is not yet "connected".
+            if (s.handshakeMs <= 0L) stringResource(R.string.settings_vpn_status_waiting)
+            else {
+                val age = ((System.currentTimeMillis() - s.handshakeMs) / 1000L).toInt()
+                val minutes = ((System.currentTimeMillis() - s.sinceMs) / 60_000L).toInt().coerceAtLeast(0)
+                stringResource(
+                    R.string.settings_vpn_status_on,
+                    stringResource(R.string.settings_vpn_handshake_ago, age.coerceAtLeast(0)),
+                    pluralStringResource(R.plurals.settings_vpn_connected_minutes, minutes, minutes),
+                )
+            }
         }
         is PoterxVpn.State.Failed -> stringResource(
             when (s.reason) {
@@ -142,11 +172,21 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
     val endpointText = when {
         !connected -> ""
-        surfsharkActive -> account?.lastServer.orEmpty()
+        surfsharkActive -> localizedServerName(account?.lastServer.orEmpty(), locale)
         else -> activeProfile?.endpoint.orEmpty()
     }
+    val bytes = { n: Long -> android.text.format.Formatter.formatShortFileSize(context, n) }
+    val on = state as? PoterxVpn.State.On
+    val transferText = if (on != null) {
+        stringResource(
+            R.string.settings_vpn_transfer_now,
+            speedText(context, locale, on.rxBitsPerSecond), speedText(context, locale, on.txBitsPerSecond),
+            bytes(on.rxBytes), bytes(on.txBytes),
+        )
+    } else stringResource(R.string.settings_vpn_transfer_idle)
+    val monthText = stringResource(R.string.settings_vpn_transfer_month, bytes(usage.rxBytes), bytes(usage.txBytes))
 
-    val rowCount = if (builtIn) 3 else 5 + profiles.size + (if (account != null) 2 else 3)
+    val rowCount = if (builtIn) 4 else 6 + profiles.size + (if (account != null) 2 else 3)
     StageFullPage(
         parents = listOf(stringResource(R.string.settings_group_app), stringResource(R.string.settings_group_network)),
         title = stringResource(R.string.settings_vpn),
@@ -170,6 +210,14 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             title = stringResource(R.string.settings_vpn_status),
             desc = statusText,
             value = SettingValue.Saved(endpointText, any = false),
+            onClick = {},
+        )
+        // Speed now and the bytes moved: this connection in the description, the month on the right.
+        StageSettingRow(
+            icon = OwnTVIcon.NETWORK,
+            title = stringResource(R.string.settings_vpn_transfer),
+            desc = transferText,
+            value = SettingValue.Saved(monthText, any = false),
             onClick = {},
         )
 

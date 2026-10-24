@@ -67,8 +67,19 @@ class PoterxVpn(private val context: Context, http: OkHttpClient) {
     sealed interface State {
         data object Off : State
         data object Connecting : State
-        /** Up, with the latest peer handshake (0 = none yet) and the bytes moved since connect. */
-        data class On(val sinceMs: Long, val handshakeMs: Long, val rxBytes: Long, val txBytes: Long) : State
+        /** Up, with the latest peer handshake (0 = none yet), the bytes moved since connect and the
+         *  current rate in bits per second (over the last sampling period). */
+        data class On(
+            val sinceMs: Long,
+            val handshakeMs: Long,
+            val rxBytes: Long,
+            val txBytes: Long,
+            val rxBitsPerSecond: Long = 0L,
+            val txBitsPerSecond: Long = 0L,
+        ) : State
+
+        /** Bytes moved through the tunnel this calendar month, across connections and restarts. */
+        data class Usage(val month: String, val rxBytes: Long, val txBytes: Long)
         data class Failed(val reason: Failure) : State
     }
 
@@ -102,6 +113,8 @@ class PoterxVpn(private val context: Context, http: OkHttpClient) {
     val state: StateFlow<State> = _state.asStateFlow()
     private val _clusters = MutableStateFlow<List<SurfsharkClient.Cluster>>(emptyList())
     val clusters: StateFlow<List<SurfsharkClient.Cluster>> = _clusters.asStateFlow()
+    private val _usage = MutableStateFlow(loadUsage())
+    val usage: StateFlow<State.Usage> = _usage.asStateFlow()
 
     private val tunnel = object : Tunnel {
         override fun getName(): String = TUNNEL_NAME
@@ -394,11 +407,26 @@ class PoterxVpn(private val context: Context, http: OkHttpClient) {
         statsJob?.cancel()
         statsJob = scope.launch {
             var silentSince = 0L
+            // The tunnel's counters start at zero on connect; the deltas between samples give the
+            // rate and are added to the month's usage.
+            var lastRx = 0L
+            var lastTx = 0L
+            var lastAt = 0L
             while (isActive) {
                 delay(STATS_PERIOD_MS)
                 val stats = runCatching { backend.getStatistics(tunnel) }.getOrNull() ?: continue
                 val handshake = stats.peers().maxOfOrNull { stats.peer(it)?.latestHandshakeEpochMillis() ?: 0L } ?: 0L
-                if (_state.value is State.On) _state.value = State.On(connectedAt, handshake, stats.totalRx(), stats.totalTx())
+                val rx = stats.totalRx()
+                val tx = stats.totalTx()
+                val sampledAt = System.currentTimeMillis()
+                val dRx = (rx - lastRx).coerceAtLeast(0L)
+                val dTx = (tx - lastTx).coerceAtLeast(0L)
+                val periodMs = if (lastAt == 0L) 0L else sampledAt - lastAt
+                val rxBps = if (periodMs > 0L) dRx * 8_000L / periodMs else 0L
+                val txBps = if (periodMs > 0L) dTx * 8_000L / periodMs else 0L
+                lastRx = rx; lastTx = tx; lastAt = sampledAt
+                if (dRx > 0L || dTx > 0L) addUsage(dRx, dTx)
+                if (_state.value is State.On) _state.value = State.On(connectedAt, handshake, rx, tx, rxBps, txBps)
                 // Surfshark forgets a key after some days; the tunnel then stays up but the server goes
                 // silent. One reconnect re-registers the key and moves to a live server.
                 val now = System.currentTimeMillis()
@@ -412,6 +440,28 @@ class PoterxVpn(private val context: Context, http: OkHttpClient) {
     }
 
     private fun parse(text: String): Config = Config.parse(ByteArrayInputStream(text.toByteArray()))
+
+    // ---- data usage ------------------------------------------------------------------------------
+
+    private fun currentMonth(): String {
+        val cal = java.util.Calendar.getInstance()
+        return "%04d-%02d".format(java.util.Locale.ROOT, cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH) + 1)
+    }
+
+    private fun loadUsage(): State.Usage {
+        val month = currentMonth()
+        if (prefs.getString(KEY_USAGE_MONTH, null) != month) return State.Usage(month, 0L, 0L)
+        return State.Usage(month, prefs.getLong(KEY_USAGE_RX, 0L), prefs.getLong(KEY_USAGE_TX, 0L))
+    }
+
+    /** Adds one sample's bytes to this month's total; a new month starts from zero. */
+    private fun addUsage(rxBytes: Long, txBytes: Long) {
+        val month = currentMonth()
+        val base = _usage.value.takeIf { it.month == month } ?: State.Usage(month, 0L, 0L)
+        val next = State.Usage(month, base.rxBytes + rxBytes, base.txBytes + txBytes)
+        _usage.value = next
+        prefs.edit().putString(KEY_USAGE_MONTH, month).putLong(KEY_USAGE_RX, next.rxBytes).putLong(KEY_USAGE_TX, next.txBytes).apply()
+    }
 
     // ---- encrypted store -------------------------------------------------------------------------
 
@@ -488,6 +538,9 @@ class PoterxVpn(private val context: Context, http: OkHttpClient) {
         private const val PREFS = "poterx_vpn"
         private const val KEY_ACTIVE = "active"
         private const val KEY_AUTO_CONNECT = "auto_connect"
+        private const val KEY_USAGE_MONTH = "usage_month"
+        private const val KEY_USAGE_RX = "usage_rx"
+        private const val KEY_USAGE_TX = "usage_tx"
         private const val STORE_DIR = "poterx_vpn"
         private const val STORE_FILE = "profiles.bin"
         private const val KEYSTORE = "AndroidKeyStore"

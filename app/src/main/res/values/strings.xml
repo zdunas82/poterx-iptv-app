@@ -71,8 +71,18 @@
     <string name="settings_vpn_status">Status</string>
     <string name="settings_vpn_status_off">Not connected</string>
     <string name="settings_vpn_status_connecting">Connecting\u2026</string>
-    <string name="settings_vpn_status_on">Connected · %1$s · \u2193 %2$s · \u2191 %3$s</string>
-    <string name="settings_vpn_handshake_none">waiting for the server</string>
+    <string name="settings_vpn_status_on">Connected · %1$s · %2$s</string>
+    <string name="settings_vpn_status_waiting">Tunnel up, waiting for the server to answer · the first connection can take a few minutes</string>
+    <plurals name="settings_vpn_connected_minutes">
+        <item quantity="one">for %1$d minute</item>
+        <item quantity="other">for %1$d minutes</item>
+    </plurals>
+    <string name="settings_vpn_transfer">Speed and data used</string>
+    <string name="settings_vpn_transfer_now">Now \u2193 %1$s · \u2191 %2$s · this connection \u2193 %3$s · \u2191 %4$s</string>
+    <string name="settings_vpn_transfer_idle">No tunnel at the moment</string>
+    <string name="settings_vpn_transfer_month">This month \u2193 %1$s · \u2191 %2$s</string>
+    <string name="settings_vpn_speed_mbps">%1$s Mb/s</string>
+    <string name="settings_vpn_speed_kbps">%1$s kb/s</string>
     <string name="settings_vpn_handshake_ago">server answered %1$d s ago</string>
     <string name="settings_vpn_error_permission">The system did not allow the VPN. Turn the switch on again and accept the prompt.</string>
     <string name="settings_vpn_error_no_profile">No profile to connect with</string>

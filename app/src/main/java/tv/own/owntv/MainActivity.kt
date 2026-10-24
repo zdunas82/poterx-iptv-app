@@ -129,10 +129,18 @@ open class MainActivity : ComponentActivity() {
         // Paired with onStop: bring back what was freed while backgrounded (notably the TV screensaver, which
         // kicks in during a long pause) — a VOD restored paused at its position, and a live channel re-tuned
         // to the live edge — so Play resumes instead of sitting on a dead/empty stream. No-op on fresh launch.
-        engines.onAppForegrounded()
-        // Staleness-based auto refresh on resume (interval modes only — STARTUP is cold-start only). The
-        // ViewModel throttles this internally so a quick toggle doesn't re-run the check.
-        shellViewModel.checkAutoRefresh(includeStartup = false)
+        // Poterx: once, on return from Home with the VPN up and the device out of memory, the resume
+        // died with a SecurityException ("Package android does not belong to <uid>", a platform
+        // check failing under pressure). A resume that cannot restore playback is recoverable from
+        // the screen; a process death on every return is not, so the failure is logged, not thrown.
+        try {
+            engines.onAppForegrounded()
+            // Staleness-based auto refresh on resume (interval modes only — STARTUP is cold-start only). The
+            // ViewModel throttles this internally so a quick toggle doesn't re-run the check.
+            shellViewModel.checkAutoRefresh(includeStartup = false)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "onStart: resume refused by the system", e)
+        }
     }
 
     /**

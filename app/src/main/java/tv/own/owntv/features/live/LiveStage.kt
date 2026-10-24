@@ -382,13 +382,15 @@ private fun LiveScheduleItem(p: XtEpgEntry, accentTime: Boolean, onClick: () -> 
 /** Scroll only as far as the focused item, plus one row of room, needs (the TV default pins it a third down). */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 /**
- * Poterx: the poster grids. A row that leaves the viewport is brought back flush with the top edge,
- * so the row above it scrolls out entirely — with [edgeScrollSpec]'s "one row of room" the previous
- * row's captions stayed in view under the toolbar, dimmed by the fade but still readable.
+ * Poterx: the poster grids. The focused row always sits [topInsetPx] below the grid's top edge, so
+ * the row above it is out of view entirely. The spec is evaluated again on every frame of the
+ * scroll animation, so it must name the same target each time: the earlier "scroll only while the
+ * row is partly hidden" version returned zero the moment the row was fully visible, which stopped
+ * the animation with the row at the bottom edge and the previous row's captions still showing
+ * under the toolbar, dimmed by the fade but readable.
  */
-internal val rowAlignScrollSpec = object : androidx.compose.foundation.gestures.BringIntoViewSpec {
-    override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float =
-        if (offset < 0f || offset + size > containerSize) offset else 0f
+internal fun rowAlignScrollSpec(topInsetPx: Float) = object : androidx.compose.foundation.gestures.BringIntoViewSpec {
+    override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float = offset - topInsetPx
 }
 
 internal val edgeScrollSpec = object : androidx.compose.foundation.gestures.BringIntoViewSpec {
