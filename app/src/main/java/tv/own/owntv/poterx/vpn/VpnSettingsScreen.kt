@@ -104,7 +104,7 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             else -> if (builtIn) vpn.disable() else vpn.disconnect()
         }
     }
-    fun countryName(code: String): String = Locale("", code).getDisplayCountry(locale).ifBlank { code }
+    fun countryName(code: String): String = Locale.Builder().setRegion(code).build().getDisplayCountry(locale).ifBlank { code }
 
     val connected = state is PoterxVpn.State.On
     val statusText = when (val s = state) {
@@ -133,7 +133,7 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             },
         )
     }
-    val builtInCountry = account?.countryCode ?: Locale.getDefault().country.ifBlank { "PL" }
+    val builtInCountry = account?.countryCode ?: locale.country.ifBlank { "PL" }
     val activeName = when {
         builtIn -> stringResource(R.string.settings_vpn_surfshark_name, countryName(builtInCountry))
         surfsharkActive -> stringResource(R.string.settings_vpn_surfshark_name, countryName(account?.countryCode.orEmpty()))
