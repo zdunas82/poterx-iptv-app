@@ -70,7 +70,17 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 - **v0.2.7** (w toku): karta aktualizacji bez adresów GitHuba w opisie wydania (linki i wiersze
   „Full Changelog” wycinane w wersji zamkniętej); plan VPS pod aktualizacje (`VPS.md`); propozycja
   Info bar 2 zapisana w planie.
-- **v0.3.4** (w toku, po audycie v0.3.3): VPN pokazuje prędkość (↓/↑ b/s), dane tego połączenia i
+- **v0.3.4** (w toku, po audycie v0.3.3): `PoterxReachability` — przed importem `SourceTester` pyta panel o
+  dane (zły login/hasło = `auth: 0` lub 401/403, wygasły abonament), a gdy panel nie odpowiada,
+  diagnoza w krokach: łączność systemowa, serwer aktualizacji po HTTPS (brak internetu), DNS hosta
+  panelu (brak odpowiedzi lub adres prywatny = blokada DNS), TCP (odcięcie = blokada adresu), HTTP
+  `player_api.php` bez danych (JSON = panel działa, HTML/403/451 = strona blokady, 5xx = awaria);
+  tabela decyzji w `PoterxReachabilityTest`. Ekran logowania: osobne komunikaty, przy blokadzie
+  przycisk „Włącz VPN i zaloguj” (zgoda systemowa → `vpn.enable()` → czekanie do 4 min na pierwszy
+  handshake → ponowne sprawdzenie); strona „nie udało się” po imporcie tak samo. W zalogowanej
+  aplikacji `PoterxBlockWatch`: 12 s po starcie i co 15 min, gdy VPN wyłączony, diagnoza hosta
+  panelu; blokada z udzieloną zgodą włącza VPN sam i pokazuje kartę, bez zgody karta z przyciskiem
+  („Nie teraz” wycisza do końca dnia). VPN pokazuje prędkość (↓/↑ b/s), dane tego połączenia i
   sumę w miesiącu (zapis w `poterx_vpn`, reset z nowym miesiącem); stan „Tunel gotowy, czekam na
   odpowiedź serwera” zamiast „Połączono”, dopóki nie ma pierwszego handshake’u (świeży klucz
   Surfshark potrzebuje do kilku minut); polskie nazwy miast serwerów. Siatki filmów/seriali: spec

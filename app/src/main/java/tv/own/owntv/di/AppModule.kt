@@ -64,6 +64,8 @@ val appModule = module {
     singleOf(::SportsPlayback)
     // Poterx: the in-app WireGuard tunnel (Settings › Network › VPN).
     single { tv.own.owntv.poterx.vpn.PoterxVpn(androidContext(), get()) }
+    // Poterx: tells a wrong password, no internet, an ISP block and a panel outage apart.
+    single { tv.own.owntv.poterx.PoterxReachability(get(), get(), get()) }
     // Poterx: updates from the provider's own server when one is built in, else core's GitHub Releases.
     single<tv.own.owntv.features.update.AppUpdater> {
         val url = tv.own.owntv.poterx.LockedSource.account?.updateUrl.orEmpty()

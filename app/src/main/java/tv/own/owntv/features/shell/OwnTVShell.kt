@@ -2045,6 +2045,8 @@ fun OwnTVShell(
 
         // Poterx: the subscription-ends-soon card, kept back while a channel or film is fullscreen.
         tv.own.owntv.poterx.PoterxExpiryNotice(canShow = playerMode == PlayerMode.NONE && !showExit)
+        // Poterx: an ISP block that began after sign-in — the built-in VPN is offered, or turned on.
+        tv.own.owntv.poterx.PoterxBlockWatch(canShow = playerMode == PlayerMode.NONE && !showExit)
         val updateManager = koinInject<tv.own.owntv.features.update.AppUpdater>()
         // Poterx: the server no longer serves this version — the card stays until the update is taken.
         val updateRequired by updateManager.required.collectAsStateWithLifecycle()
