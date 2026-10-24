@@ -940,10 +940,15 @@
 1	technical	app/src/main/java/tv/own/owntv/poterx/PoterxPrivacy.kt	•••
 1	url	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	/player_api.php
 1	url	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	/update.json
+1	technical	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	<
+1	protocol	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	Content-Type
 1	log	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	PoterxReach
 2	protocol	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	User-Agent
+1	json	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	[
 1	log	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	diagnose: dns=${dns.first} tcp=$tcp http=$httpResult -> $verdict
+1	protocol	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	html
 1	protocol	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	https://
+1	protocol	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	json
 1	technical	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	probe
 1	json	app/src/main/java/tv/own/owntv/poterx/PoterxReachability.kt	{
 6	empty	app/src/main/java/tv/own/owntv/poterx/PoterxReleaseNotes.kt	\0

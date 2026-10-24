@@ -142,7 +142,7 @@ fun LockedOnboarding(
         diagnosed = failed
         val sync = (failed.failure as? SourceImporter.SetupFailure.Sync)?.failure
         if (sync == null || sync is tv.own.owntv.core.util.FriendlySyncFailure.AuthenticationRejected) return@LaunchedEffect
-        verdict = reach.diagnose(account.server)
+        verdict = reach.signIn(account.server, account.username.ifBlank { username.trim() }, account.password.ifBlank { password }, PoterxAccount.userAgent)
     }
 
     // 1. The profile. -1 = no avatar yet, the same default the wizard's profile step starts on.

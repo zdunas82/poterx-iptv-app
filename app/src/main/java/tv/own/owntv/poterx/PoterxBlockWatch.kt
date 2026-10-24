@@ -16,9 +16,14 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import tv.own.owntv.R
+import tv.own.owntv.core.database.dao.SourceDao
+import tv.own.owntv.core.model.SourceType
 import tv.own.owntv.poterx.vpn.PoterxVpn
 import tv.own.owntv.ui.stage.StageButton
 import tv.own.owntv.ui.stage.StagePopup
@@ -26,14 +31,18 @@ import tv.own.owntv.ui.theme.mpx
 
 private const val FIRST_CHECK_DELAY_MS = 12_000L
 private const val RECHECK_EVERY_MS = 15L * 60 * 1000
+/** A block is acted on only when a second look, this much later, finds it still there. */
+private const val CONFIRM_AFTER_MS = 20_000L
 private const val DAY_MS = 24L * 60 * 60 * 1000
 private const val PREFS = "poterx_block"
 private const val KEY_DECLINED_DAY = "declined_day"
 
 /**
  * Poterx: an ISP block that starts after the customer signed in. The channels simply stop, and
- * nothing on screen says why. While the built-in VPN is off, the panel's host is checked shortly
- * after start and then every quarter of an hour ([PoterxReachability.diagnose]). A block found:
+ * nothing on screen says why. While the built-in VPN is off, the saved playlist's panel is asked
+ * with its own account shortly after start and then every quarter of an hour
+ * ([PoterxReachability.check]); only a panel that gives no answer at all has its network looked
+ * at. A block found, and found again twenty seconds later:
  *
  * - with the system's VPN consent already given: the VPN is turned on at once (the switch stays
  *   on, as if the customer had done it) and a card says what happened;
@@ -48,6 +57,7 @@ fun PoterxBlockWatch(canShow: Boolean) {
     val vpn: PoterxVpn = koinInject()
     if (!vpn.builtIn) return
     val reach: PoterxReachability = koinInject()
+    val sourceDao: SourceDao = koinInject()
     val context = LocalContext.current
     val autoConnect by vpn.autoConnect.collectAsStateWithLifecycle()
     var offer by remember { mutableStateOf<PoterxReachability.Block?>(null) }
@@ -56,13 +66,19 @@ fun PoterxBlockWatch(canShow: Boolean) {
 
     LaunchedEffect(autoConnect, declined) {
         if (autoConnect || declined) return@LaunchedEffect
-        val server = LockedSource.account?.server ?: return@LaunchedEffect
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         delay(FIRST_CHECK_DELAY_MS)
         while (true) {
             val today = System.currentTimeMillis() / DAY_MS
             if (prefs.getLong(KEY_DECLINED_DAY, -1L) != today) {
-                val verdict = reach.diagnose(server)
+                val source = withContext(Dispatchers.IO) {
+                    sourceDao.observeAll().first().firstOrNull { it.type == SourceType.XTREAM }
+                } ?: return@LaunchedEffect
+                var verdict = reach.check(source)
+                if (verdict is PoterxReachability.Verdict.Blocked) {
+                    delay(CONFIRM_AFTER_MS)
+                    verdict = reach.check(source)
+                }
                 if (verdict is PoterxReachability.Verdict.Blocked) {
                     if (vpn.prepareIntent() == null) {
                         vpn.enable()

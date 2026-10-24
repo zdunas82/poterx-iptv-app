@@ -63,7 +63,8 @@ class PoterxReachability(
     enum class Dns { OK, FAILED, BOGUS }
     enum class Tcp { OK, FAILED }
     sealed interface Http {
-        data class Answered(val code: Int, val json: Boolean) : Http
+        /** An answer: [json] when the body is a JSON object or array, [html] when it is a web page. */
+        data class Answered(val code: Int, val json: Boolean, val html: Boolean = false) : Http
         /** No HTTP answer; [reset] when the connection was closed on us rather than timing out. */
         data class Failed(val reset: Boolean) : Http
     }
@@ -94,8 +95,24 @@ class PoterxReachability(
     }
 
     /**
+     * A saved playlist's worth of checking: the panel's own answer to the saved account first — a
+     * panel that says yes, no or expired is reachable, whatever the host does without credentials —
+     * and the network diagnosis only when it gives none.
+     */
+    suspend fun check(source: SourceEntity): Verdict {
+        val result = runCatching { tester.test(source) }.getOrElse { SourceTestResult.Unreachable(it.message) }
+        return when (result) {
+            is SourceTestResult.Ok, SourceTestResult.AuthFailed, is SourceTestResult.Expired -> Verdict.Ok
+            is SourceTestResult.Unreachable -> diagnose(source.url).let { if (it is Verdict.Ok) Verdict.PanelDown else it }
+        }
+    }
+
+    /**
      * Why the panel at [server] does not answer: [Verdict.Offline], [Verdict.Blocked] or
-     * [Verdict.PanelDown]; [Verdict.Ok] when its host answers like a panel after all.
+     * [Verdict.PanelDown]; [Verdict.Ok] when its host answers like a panel after all. Never called
+     * on its own for a verdict: a panel asked without credentials answers whatever it likes (a JSON
+     * refusal, an empty page, a 4xx), so only the account call above can say the panel is fine, and
+     * only a web page or a 451 says an ISP stands in its place.
      */
     suspend fun diagnose(server: String): Verdict = withContext(Dispatchers.IO) {
         if (!connectivity.isOnlineNow()) return@withContext Verdict.Offline
@@ -138,8 +155,11 @@ class PoterxReachability(
 
     private fun request(url: String): Http = try {
         probeClient.newCall(Request.Builder().url(url).header("User-Agent", PoterxAccount.userAgent).build()).execute().use { resp ->
-            val head = resp.peekBody(256).string()
-            Http.Answered(resp.code, head.trimStart('\uFEFF', ' ', '\n', '\r', '\t').startsWith("{"))
+            val head = resp.peekBody(1024).string().trimStart('\uFEFF', ' ', '\n', '\r', '\t')
+            val type = resp.header("Content-Type").orEmpty().lowercase()
+            val json = head.startsWith("{") || head.startsWith("[") || type.contains("json")
+            val html = !json && (type.contains("html") || head.startsWith("<"))
+            Http.Answered(resp.code, json, html)
         }
     } catch (e: SocketTimeoutException) {
         Http.Failed(reset = false)
@@ -151,16 +171,20 @@ class PoterxReachability(
         private const val TAG = "PoterxReach"
         private const val PROBE_TIMEOUT_MS = 6_000L
 
-        /** The decision table: what the three probes together say about the panel. */
+        /**
+         * The decision table: what the three probes together say about the panel. A block is only
+         * ever read from a sign the ISP leaves — no address, no connection, a web page or a 451 in
+         * the panel's place. Anything else the host answers (JSON, an empty body, a 404, a 5xx) is
+         * the panel's own doing: v0.3.4 called every non-JSON answer a block page, and every
+         * customer whose panel answers an empty page to a call without credentials saw the card.
+         */
         fun classify(dns: Dns, tcp: Tcp, http: Http): Verdict = when {
             dns != Dns.OK -> Verdict.Blocked(Block.DNS)
             tcp == Tcp.FAILED -> Verdict.Blocked(Block.CONNECTION)
             http is Http.Failed -> if (http.reset) Verdict.Blocked(Block.CONNECTION) else Verdict.PanelDown
             http is Http.Answered && http.json -> Verdict.Ok
-            http is Http.Answered && (http.code == 403 || http.code == 451) -> Verdict.Blocked(Block.PAGE)
-            http is Http.Answered && http.code >= 500 -> Verdict.PanelDown
-            // 2xx/3xx/4xx with something other than JSON: a page put in the panel's place.
-            else -> Verdict.Blocked(Block.PAGE)
+            http is Http.Answered && (http.html || http.code == 451) -> Verdict.Blocked(Block.PAGE)
+            else -> Verdict.PanelDown
         }
     }
 }

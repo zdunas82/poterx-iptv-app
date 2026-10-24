@@ -70,7 +70,15 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
 - **v0.2.7** (w toku): karta aktualizacji bez adresów GitHuba w opisie wydania (linki i wiersze
   „Full Changelog” wycinane w wersji zamkniętej); plan VPS pod aktualizacje (`VPS.md`); propozycja
   Info bar 2 zapisana w planie.
-- **v0.3.4** (w toku, po audycie v0.3.3): `PoterxReachability` — przed importem `SourceTester` pyta panel o
+- **v0.3.5** (w toku, po audycie v0.3.4): fałszywy alarm blokady — `classify` uznawał każdą odpowiedź
+  inną niż JSON na `player_api.php` bez danych (pusty body, 4xx) za stronę blokady i `PoterxBlockWatch`
+  włączał VPN u każdego klienta po ~15 s. Teraz: `PoterxReachability.check(source)` pyta panel
+  zapisanym kontem (`SourceTester`) i tylko brak odpowiedzi prowadzi do diagnozy sieci; strona
+  blokady = HTML (Content-Type lub `<`) albo 451; JSON to także `[` i Content-Type json; reszta =
+  awaria panelu. Watch potwierdza blokadę drugim sprawdzeniem po 20 s. Strona „nie udało się” po
+  imporcie używa `signIn` z danymi zamiast `diagnose`. Audyt v0.3.4: testy 4–6 zaliczone (CH± po
+  zimnym starcie, siatka, liczniki VPN zgodne z systemem).
+- **v0.3.4** (2026‑10‑24, tag 5c824de, kanał testowy): `PoterxReachability` — przed importem `SourceTester` pyta panel o
   dane (zły login/hasło = `auth: 0` lub 401/403, wygasły abonament), a gdy panel nie odpowiada,
   diagnoza w krokach: łączność systemowa, serwer aktualizacji po HTTPS (brak internetu), DNS hosta
   panelu (brak odpowiedzi lub adres prywatny = blokada DNS), TCP (odcięcie = blokada adresu), HTTP

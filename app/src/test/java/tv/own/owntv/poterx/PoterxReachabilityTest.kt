@@ -30,10 +30,19 @@ class PoterxReachabilityTest {
     }
 
     @Test
-    fun `a block page or 403 is a page block, a 5xx or a timeout is the panel`() {
-        assertEquals(Verdict.Blocked(Block.PAGE), classify(Dns.OK, Tcp.OK, Http.Answered(403, json = false)))
-        assertEquals(Verdict.Blocked(Block.PAGE), classify(Dns.OK, Tcp.OK, Http.Answered(200, json = false)))
-        assertEquals(Verdict.Blocked(Block.PAGE), classify(Dns.OK, Tcp.OK, Http.Answered(302, json = false)))
+    fun `only a web page or a 451 in the panel's place is a page block`() {
+        assertEquals(Verdict.Blocked(Block.PAGE), classify(Dns.OK, Tcp.OK, Http.Answered(200, json = false, html = true)))
+        assertEquals(Verdict.Blocked(Block.PAGE), classify(Dns.OK, Tcp.OK, Http.Answered(403, json = false, html = true)))
+        assertEquals(Verdict.Blocked(Block.PAGE), classify(Dns.OK, Tcp.OK, Http.Answered(451, json = false)))
+    }
+
+    @Test
+    fun `an empty body, a 4xx, a 5xx or a timeout is the panel's own doing, not a block`() {
+        // The v0.3.4 false alarm: a panel asked without credentials answered an empty page.
+        assertEquals(Verdict.PanelDown, classify(Dns.OK, Tcp.OK, Http.Answered(200, json = false)))
+        assertEquals(Verdict.PanelDown, classify(Dns.OK, Tcp.OK, Http.Answered(403, json = false)))
+        assertEquals(Verdict.PanelDown, classify(Dns.OK, Tcp.OK, Http.Answered(404, json = false)))
+        assertEquals(Verdict.PanelDown, classify(Dns.OK, Tcp.OK, Http.Answered(302, json = false)))
         assertEquals(Verdict.PanelDown, classify(Dns.OK, Tcp.OK, Http.Answered(502, json = false)))
         assertEquals(Verdict.PanelDown, classify(Dns.OK, Tcp.OK, Http.Failed(reset = false)))
     }
