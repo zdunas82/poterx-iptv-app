@@ -35,6 +35,8 @@ trafia do APK dopiero przy budowaniu (zaszyfrowane AES‑GCM, R8 w wydaniu relea
      zamiast GitHub Releases) oraz `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (CI wgrywa APK i `update-test.json`
      przez `rsync`; promocja do klientów: workflow „Promote update”). Zmienna repo `POTERX_MIN_VERSION_CODE`
      wymusza aktualizację starszych wersji. Szczegóły: `docs/poterx/VPS.md`.
+     `POTERX_VPN_USER` i `POTERX_VPN_PASS` (konto Surfshark dostawcy; suwak VPN w Ustawieniach › Sieć łączy
+     wtedy bez wpisywania czegokolwiek; weryfikacja dwuetapowa na tym koncie musi być wyłączona).
    - (opcjonalnie, do podpisu wydań) `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 2. Zakładka **Actions → Android CI → Run workflow**. Możesz też podać linijkę (albo sam serwer) w
    polu formularza — wtedy buduje się APK dla konkretnego klienta bez zmiany sekretów.

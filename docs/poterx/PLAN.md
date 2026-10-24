@@ -74,7 +74,10 @@ projektów open source i paczek referencyjnych jest w `REFERENCE-APPS.md`.
   `com.wireguard.android:tunnel`) tylko dla pakietu Poterx, import profilu z pliku `.conf` lub
   wklejonego tekstu (np. Surfshark › konfiguracja ręczna), zapisane profile szyfrowane kluczem z
   Android Keystore, Połącz/Rozłącz ze stanem (handshake, ruch), „Łącz przy starcie”. Bez systemowego
-  kill switcha; zewnętrzny odtwarzacz poza tunelem.
+  kill switcha; zewnętrzny odtwarzacz poza tunelem. Konto Surfshark: logowanie, rejestracja klucza,
+  wybór najmniej obciążonego serwera w kraju, odnowienie klucza. **Konto dostawcy wbudowane**
+  (`POTERX_VPN_USER`/`POTERX_VPN_PASS` w blobie): klient widzi tylko suwak, stan i kraj; suwak sam
+  loguje, rejestruje klucz, łączy i zostaje włączony po restarcie.
 - **v0.3.2** (2026‑10‑23, tag f5a58ab, opublikowana dla klientów): siatki filmów i seriali dosuwają rząd do górnej krawędzi,
   więc podpisy poprzedniego rzędu nie zostają pod paskiem; na stronie serialu ustępuje przycisk
   odtwarzania, nie „Pobierz sezon”.

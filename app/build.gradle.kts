@@ -148,9 +148,13 @@ android {
             val tmdb = poterxValue("POTERX_TMDB_KEY", "poterx.tmdbKey")?.trim().orEmpty()
             // Poterx v0.3: the provider's own update server (https://…); blank keeps GitHub Releases.
             val updateUrl = poterxValue("POTERX_UPDATE_URL", "poterx.updateUrl")?.trim()?.trimEnd('/').orEmpty()
+            // Poterx v0.4: the provider's VPN account (Surfshark e-mail and password). With it the VPN
+            // switch in Settings needs nothing typed: the app signs in, registers its key and connects.
+            val vpnUser = poterxValue("POTERX_VPN_USER", "poterx.vpnUser")?.trim().orEmpty()
+            val vpnPass = poterxValue("POTERX_VPN_PASS", "poterx.vpnPass").orEmpty()
             // Server alone is a valid lock: the user then types only a username and password.
             if (server.isNullOrBlank()) null
-            else listOf(PoterxLink.normalizeServer(server), user?.trim().orEmpty(), pass.orEmpty(), hls, pin, contact, tmdb, updateUrl)
+            else listOf(PoterxLink.normalizeServer(server), user?.trim().orEmpty(), pass.orEmpty(), hls, pin, contact, tmdb, updateUrl, vpnUser, vpnPass)
         }
         val poterxSealed = poterxAccount?.let { PoterxLink.seal(it.joinToString("\n")) }
         buildConfigField("boolean", "POTERX_LOCKED", (poterxSealed != null).toString())

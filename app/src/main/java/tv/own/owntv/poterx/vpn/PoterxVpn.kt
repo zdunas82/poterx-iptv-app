@@ -133,6 +133,38 @@ class PoterxVpn(private val context: Context, http: OkHttpClient) {
     /** Something to connect with: a profile, or the Surfshark account. */
     val hasActive: Boolean get() = activeProfile != null || surfsharkActive
 
+    /** The provider built a VPN account into this app: the switch alone signs in and connects. */
+    val builtIn: Boolean
+        get() = tv.own.owntv.poterx.LockedSource.enabled && !tv.own.owntv.poterx.LockedSource.account?.vpnUser.isNullOrBlank()
+
+    /**
+     * The customer's one control on a built-in account: on signs in (once), remembers the choice for
+     * every start and connects; off forgets the choice and closes the tunnel. Consent must be given.
+     */
+    fun enable() {
+        setAutoConnect(true)
+        scope.launch {
+            if (!signInBuiltIn()) return@launch
+            if (prepareIntent() == null) connect() else _state.value = State.Failed(Failure.NOT_AUTHORIZED)
+        }
+    }
+
+    fun disable() {
+        setAutoConnect(false)
+        disconnect()
+    }
+
+    /** Signs in with the built-in account when no session is held yet; true when there is one to use. */
+    private suspend fun signInBuiltIn(): Boolean {
+        if (_account.value != null) return true
+        val creds = tv.own.owntv.poterx.LockedSource.account?.takeIf { builtIn } ?: return false
+        _state.value = State.Connecting
+        return when (surfsharkSignIn(creds.vpnUser, creds.vpnPass)) {
+            SignIn.Ok -> true
+            else -> { _state.value = State.Failed(Failure.ACCOUNT); false }
+        }
+    }
+
     // ---- profiles from a .conf -------------------------------------------------------------------
 
     /** Validates [text] as a WireGuard configuration and saves it; the new profile becomes active. */
@@ -272,6 +304,19 @@ class PoterxVpn(private val context: Context, http: OkHttpClient) {
             account = account.copy(privateKey = keys.privateKey.toBase64(), publicKey = keys.publicKey.toBase64())
             status = surfshark.registerKey(tokens, account.publicKey)
         }
+        if (status is SurfsharkClient.KeyStatus.Unauthorized && builtIn) {
+            // The provider's account: a dead session is signed in again rather than reported.
+            val creds = tv.own.owntv.poterx.LockedSource.account ?: return null to Failure.ACCOUNT
+            val login = surfshark.login(creds.vpnUser, creds.vpnPass) as? SurfsharkClient.Login.Ok ?: return null to Failure.ACCOUNT
+            tokens = login.tokens
+            account = account.copy(token = tokens.token, renewToken = tokens.renewToken)
+            status = surfshark.registerKey(tokens, account.publicKey)
+            if (status is SurfsharkClient.KeyStatus.Expired) {
+                val keys = KeyPair()
+                account = account.copy(privateKey = keys.privateKey.toBase64(), publicKey = keys.publicKey.toBase64())
+                status = surfshark.registerKey(tokens, account.publicKey)
+            }
+        }
         when (status) {
             is SurfsharkClient.KeyStatus.Valid -> account = account.copy(keyExpiresAt = status.expiresAt)
             is SurfsharkClient.KeyStatus.Unauthorized -> return null to Failure.ACCOUNT
@@ -340,6 +385,7 @@ class PoterxVpn(private val context: Context, http: OkHttpClient) {
         scope.launch {
             // The store loads asynchronously; give it a moment before deciding there is nothing to connect.
             repeat(20) { if (hasActive) return@repeat; delay(100) }
+            if (!hasActive && builtIn && prepareIntent() == null) { if (signInBuiltIn()) connect(); return@launch }
             if (hasActive && prepareIntent() == null && _state.value is State.Off) connect()
         }
     }

@@ -14,3 +14,5 @@ poterx.playlistUrl=http://TWOJ-HOST:80/playlist/UZYTKOWNIK/HASLO/m3u_plus
 #poterx.contact=tel. 600 000 000   # kontakt do dostawcy pokazywany przy błędzie logowania i na ekranie Konto
 #poterx.tmdbKey=xxxxxxxx              # klucz API TMDB (v3) na plakaty i opisy filmów i seriali
 #poterx.updateUrl=https://app.example.com   # własny serwer aktualizacji (update.json); puste = GitHub Releases
+#poterx.vpnUser=mail@example.com      # konto Surfshark dostawcy: suwak VPN w aplikacji łączy bez wpisywania czegokolwiek
+#poterx.vpnPass=haslo                 # (weryfikacja dwuetapowa na tym koncie musi być wyłączona)

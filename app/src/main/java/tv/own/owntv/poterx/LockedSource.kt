@@ -32,6 +32,9 @@ object LockedSource {
         val tmdbKey: String = "",
         /** The provider's update server (`https://…`), read for `update.json`; blank keeps GitHub Releases. */
         val updateUrl: String = "",
+        /** The provider's VPN account (Surfshark e-mail); blank means the customer signs in or imports a file. */
+        val vpnUser: String = "",
+        val vpnPass: String = "",
     )
 
     /** True for a build that carries an account. A build without one behaves like stock OwnTV. */
@@ -61,6 +64,8 @@ object LockedSource {
             contact = lines.getOrNull(5)?.trim().orEmpty(),
             tmdbKey = lines.getOrNull(6)?.trim().orEmpty(),
             updateUrl = lines.getOrNull(7)?.trim().orEmpty(),
+            vpnUser = lines.getOrNull(8)?.trim().orEmpty(),
+            vpnPass = lines.getOrNull(9).orEmpty(),
         )
     }.getOrNull()
 

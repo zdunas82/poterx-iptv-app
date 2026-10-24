@@ -119,4 +119,5 @@
     <string name="settings_vpn_error_login">Sign-in refused. Check the e-mail and password.</string>
     <string name="settings_vpn_error_otp">Wrong code, try again</string>
     <string name="settings_vpn_loading">Loading\u2026</string>
+    <string name="settings_vpn_note_body_builtin">Channels, films, the guide and updates go through the VPN your provider supplies; other apps on the television do not. Turn the switch on once: it stays on, also after a restart. An external player is not covered.</string>
 </resources>

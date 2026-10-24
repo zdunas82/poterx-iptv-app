@@ -85,16 +85,23 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     // The one-time system consent for a VPN; granted, the tunnel comes up at once.
     val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) vpn.connect()
+        if (result.resultCode == Activity.RESULT_OK) { if (vpn.builtIn) vpn.enable() else vpn.connect() }
     }
     val connectNow = {
         val intent = vpn.prepareIntent()
         if (intent != null) consent.launch(intent) else vpn.connect()
     }
+    val builtIn = vpn.builtIn
     val toggle = {
         when (state) {
-            is PoterxVpn.State.Off, is PoterxVpn.State.Failed -> connectNow()
-            else -> vpn.disconnect()
+            is PoterxVpn.State.Off, is PoterxVpn.State.Failed -> {
+                // Built-in account: the switch is remembered and signs in by itself; a file profile connects once.
+                if (builtIn) {
+                    val intent = vpn.prepareIntent()
+                    if (intent != null) consent.launch(intent) else vpn.enable()
+                } else connectNow()
+            }
+            else -> if (builtIn) vpn.disable() else vpn.disconnect()
         }
     }
     fun countryName(code: String): String = Locale("", code).getDisplayCountry(locale).ifBlank { code }
@@ -126,7 +133,9 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             },
         )
     }
+    val builtInCountry = account?.countryCode ?: Locale.getDefault().country.ifBlank { "PL" }
     val activeName = when {
+        builtIn -> stringResource(R.string.settings_vpn_surfshark_name, countryName(builtInCountry))
         surfsharkActive -> stringResource(R.string.settings_vpn_surfshark_name, countryName(account?.countryCode.orEmpty()))
         activeProfile != null -> activeProfile.name
         else -> null
@@ -137,7 +146,7 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         else -> activeProfile?.endpoint.orEmpty()
     }
 
-    val rowCount = 5 + profiles.size + (if (account != null) 2 else 3)
+    val rowCount = if (builtIn) 3 else 5 + profiles.size + (if (account != null) 2 else 3)
     StageFullPage(
         parents = listOf(stringResource(R.string.settings_group_app), stringResource(R.string.settings_group_network)),
         title = stringResource(R.string.settings_vpn),
@@ -151,9 +160,9 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             title = stringResource(R.string.settings_vpn_connect),
             desc = activeName?.let { stringResource(R.string.settings_vpn_connect_description, it) }
                 ?: stringResource(R.string.settings_vpn_connect_no_profile),
-            value = SettingValue.Switch(connected || state is PoterxVpn.State.Connecting),
+            value = SettingValue.Switch(connected || state is PoterxVpn.State.Connecting || (builtIn && autoConnect && state !is PoterxVpn.State.Failed)),
             onClick = toggle,
-            enabled = hasActive,
+            enabled = hasActive || builtIn,
             modifier = Modifier.focusRequester(first),
         )
         StageSettingRow(
@@ -166,7 +175,17 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
         // ---- Surfshark: sign in once, the app registers its key and picks a server ----
         val signedIn = account
-        if (signedIn == null) {
+        if (builtIn) {
+            // The provider's account: only the country is the customer's to choose.
+            StageSettingRow(
+                icon = OwnTVIcon.LIST,
+                title = stringResource(R.string.settings_vpn_surfshark_location),
+                desc = stringResource(R.string.settings_vpn_surfshark_location_description),
+                value = SettingValue.Choice(countryName(builtInCountry)),
+                onClick = { pickCountry = true; scope.launch { vpn.loadClusters() } },
+                enabled = signedIn != null,
+            )
+        } else if (signedIn == null) {
             StageSettingsNote(stringResource(R.string.settings_vpn_surfshark_title), stringResource(R.string.settings_vpn_surfshark_intro))
             val emailLabel = stringResource(R.string.settings_vpn_surfshark_email)
             StageFieldRow(OwnTVIcon.PENCIL, emailLabel, email, { email = it }, keyboardType = KeyboardType.Email)
@@ -215,8 +234,8 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             )
         }
 
-        // ---- saved .conf profiles ----
-        profiles.forEach { profile ->
+        // ---- saved .conf profiles (not offered on a built-in account: nothing to import) ----
+        if (!builtIn) profiles.forEach { profile ->
             StageSettingRow(
                 icon = OwnTVIcon.LIST,
                 title = profile.name,
@@ -232,21 +251,21 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 onLongClick = { deleteId = profile.id },
             )
         }
-        StageSettingRow(
+        if (!builtIn) StageSettingRow(
             icon = OwnTVIcon.DOWNLOADS,
             title = stringResource(R.string.settings_vpn_import_file),
             desc = stringResource(R.string.settings_vpn_import_file_description),
             value = SettingValue.Opens(null),
             onClick = { importError = false; importFile = true },
         )
-        StageSettingRow(
+        if (!builtIn) StageSettingRow(
             icon = OwnTVIcon.PENCIL,
             title = stringResource(R.string.settings_vpn_paste),
             desc = stringResource(R.string.settings_vpn_paste_description),
             value = SettingValue.Opens(null),
             onClick = { importError = false; pasteConfig = true },
         )
-        StageSettingRow(
+        if (!builtIn) StageSettingRow(
             icon = OwnTVIcon.POWER,
             title = stringResource(R.string.settings_vpn_auto_connect),
             desc = stringResource(R.string.settings_vpn_auto_connect_description),
@@ -255,7 +274,10 @@ fun VpnSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             enabled = hasActive,
         )
         if (importError) StageSettingsNote(stringResource(R.string.settings_vpn_error_config), null)
-        StageSettingsNote(stringResource(R.string.settings_vpn_note_title), stringResource(R.string.settings_vpn_note_body))
+        StageSettingsNote(
+            stringResource(R.string.settings_vpn_note_title),
+            stringResource(if (builtIn) R.string.settings_vpn_note_body_builtin else R.string.settings_vpn_note_body),
+        )
     }
 
     val importName = stringResource(R.string.settings_vpn_import_file)

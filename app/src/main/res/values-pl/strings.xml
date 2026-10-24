@@ -120,4 +120,5 @@
     <string name="settings_vpn_error_login">Logowanie odrzucone. Sprawdź e-mail i hasło.</string>
     <string name="settings_vpn_error_otp">Zły kod, spróbuj ponownie</string>
     <string name="settings_vpn_loading">Pobieranie\u2026</string>
+    <string name="settings_vpn_note_body_builtin">Kanały, filmy, przewodnik i aktualizacje idą przez VPN od Twojego dostawcy; inne aplikacje na telewizorze nie. Włącz suwak raz: zostaje włączony, także po restarcie. Zewnętrzny odtwarzacz nie jest objęty.</string>
 </resources>

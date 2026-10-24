@@ -131,7 +131,11 @@ jobs:
           SECRET_CONTACT: ${{ secrets.POTERX_CONTACT }}
           SECRET_TMDB_KEY: ${{ secrets.POTERX_TMDB_KEY }}
           SECRET_UPDATE_URL: ${{ secrets.POTERX_UPDATE_URL }}
+          SECRET_VPN_USER: ${{ secrets.POTERX_VPN_USER }}
+          SECRET_VPN_PASS: ${{ secrets.POTERX_VPN_PASS }}
         run: |
+          # Optional: the provider's VPN account; the VPN switch then needs nothing typed.
+          if [ -n "$SECRET_VPN_USER" ] && [ -n "$SECRET_VPN_PASS" ]; then echo "::add-mask::$SECRET_VPN_PASS"; echo "POTERX_VPN_USER=$SECRET_VPN_USER" >> "$GITHUB_ENV"; echo "POTERX_VPN_PASS=$SECRET_VPN_PASS" >> "$GITHUB_ENV"; echo "VPN account: set."; fi
           if [ -n "$SECRET_TMDB_KEY" ]; then echo "::add-mask::$SECRET_TMDB_KEY"; echo "POTERX_TMDB_KEY=$SECRET_TMDB_KEY" >> "$GITHUB_ENV"; echo "TMDB key: set."; fi
           # Optional: the provider's own update server; the app then never asks GitHub.
           if [ -n "$SECRET_UPDATE_URL" ]; then echo "POTERX_UPDATE_URL=$SECRET_UPDATE_URL" >> "$GITHUB_ENV"; echo "Update server: set."; fi
